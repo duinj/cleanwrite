@@ -4,15 +4,21 @@
 	let writtenText: string[] = [];
 	let currentLine: string = '';
 	let inputElement: HTMLInputElement;
+	let writtenTextElement: HTMLDivElement;
+	let writingContainer: HTMLDivElement;
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Enter' && currentLine.trim()) {
 			writtenText = [...writtenText, currentLine];
 			currentLine = '';
-			// Scroll to the bottom if needed
+
+			// Reset the scroll position after DOM update
 			setTimeout(() => {
-				window.scrollTo(0, document.body.scrollHeight);
-			}, 0);
+				// Calculate the height to position the latest entry just above the input line
+				const viewportHeight = window.innerHeight;
+				const scrollPosition = document.body.scrollHeight - viewportHeight * 0.65;
+				window.scrollTo(0, scrollPosition);
+			}, 10);
 		}
 	}
 
@@ -22,8 +28,8 @@
 	});
 </script>
 
-<div class="writing-container">
-	<div class="written-text">
+<div class="writing-container" bind:this={writingContainer}>
+	<div class="written-text" bind:this={writtenTextElement}>
 		{#each writtenText as line}
 			<p>{line}</p>
 		{/each}
@@ -46,16 +52,17 @@
 		width: 100%;
 		max-width: 800px;
 		margin: 0 auto;
-		padding: 40px 20px;
+		padding: 40px 20px 50vh 20px; /* Adjusted bottom padding */
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		position: relative;
 	}
 
 	.written-text {
 		flex-grow: 1;
-		margin-bottom: 20px;
 		width: 100%;
+		margin-bottom: 60px; /* Reduced space between written text and input line */
 	}
 
 	.written-text p {
@@ -65,10 +72,16 @@
 	}
 
 	.input-line {
-		position: sticky;
-		bottom: 40vh;
-		width: 100%;
+		position: fixed;
+		bottom: 35vh; /* Position lower on the screen */
+		left: 50%;
+		transform: translateX(-50%);
+		width: calc(100% - 40px);
+		max-width: 760px;
 		border-bottom: 1px solid var(--line-color);
+		background-color: var(--paper-color);
+		padding: 10px 0;
+		z-index: 10;
 	}
 
 	input {
