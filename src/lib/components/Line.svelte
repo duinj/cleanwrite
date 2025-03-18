@@ -2,15 +2,23 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 
 	// Component props
-	let { lineText = '' } = $props();
+	let { lineText = '', historyItems = [] } = $props<{
+		lineText?: string;
+		historyItems: string[];
+	}>();
 
 	// DOM reference
 	let textareaElement: HTMLTextAreaElement;
+
+	// History navigation
+	let historyIndex = -1; // -1 means current input (not navigating history)
+	let tempCurrentInput = ''; // Store current input when navigating history
 
 	// Event dispatcher to communicate with parent component
 	const dispatch = createEventDispatcher<{
 		lineSubmit: string;
 		textChange: string;
+		historyFocus: number; // Added event for history focus index
 	}>();
 
 	/**
@@ -21,6 +29,39 @@
 			event.preventDefault(); // Prevent default Enter behavior
 			dispatch('lineSubmit', lineText);
 			lineText = '';
+			historyIndex = -1; // Reset history index after submission
+		} else if (event.key === 'ArrowUp' && historyItems.length > 0) {
+			event.preventDefault();
+
+			// If we're not already navigating history, save current input
+			if (historyIndex === -1) {
+				tempCurrentInput = lineText;
+			}
+
+			// Move up in history (towards older items)
+			if (historyIndex < historyItems.length - 1) {
+				historyIndex++;
+				lineText = historyItems[historyItems.length - 1 - historyIndex];
+				dispatch('historyFocus', historyIndex);
+			}
+		} else if (event.key === 'ArrowDown') {
+			event.preventDefault();
+
+			// Move down in history (towards current)
+			if (historyIndex > 0) {
+				historyIndex--;
+				lineText = historyItems[historyItems.length - 1 - historyIndex];
+				dispatch('historyFocus', historyIndex);
+			} else if (historyIndex === 0) {
+				// Return to current input
+				historyIndex = -1;
+				lineText = tempCurrentInput;
+				dispatch('historyFocus', -1);
+			}
+		} else if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && historyIndex !== -1) {
+			// If user starts typing while in history, return to current input
+			historyIndex = -1;
+			dispatch('historyFocus', -1);
 		}
 	}
 

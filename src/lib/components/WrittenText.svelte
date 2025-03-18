@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Component props
-	let { lines = [] } = $props<{
+	let { lines = [], focusedIndex = -1 } = $props<{
 		lines: string[];
+		focusedIndex: number;
 	}>();
 
 	// DOM references
@@ -24,8 +25,8 @@
 <div class="writing-container">
 	<div class="fade-top" bind:this={fadeTopElement}></div>
 	<div class="written-text" bind:this={writtenTextElement}>
-		{#each lines as line}
-			<p>{line}</p>
+		{#each lines as line, index}
+			<p class:focused={lines.length - 1 - index === focusedIndex}>{line}</p>
 		{/each}
 	</div>
 </div>
@@ -79,6 +80,16 @@
 		margin: 0 0 1em 0;
 		padding: 0;
 		font-size: 1.1rem;
-		transition: opacity 0.3s ease;
+		transition:
+			opacity 0.3s ease,
+			background-color 0.2s ease;
+	}
+
+	.written-text p.focused {
+		background-color: rgba(0, 0, 0, 0.05);
+		border-radius: 4px;
+		padding: 4px 8px;
+		margin-left: -8px;
+		margin-right: -8px;
 	}
 </style>
