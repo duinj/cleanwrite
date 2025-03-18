@@ -31,32 +31,60 @@
 			lineText = '';
 			historyIndex = -1; // Reset history index after submission
 		} else if (event.key === 'ArrowUp' && historyItems.length > 0) {
-			event.preventDefault();
+			// Only start history navigation if we're at the beginning of the input
+			// or if we're already navigating, to avoid interfering with normal cursor movement
+			if (historyIndex !== -1 || textareaElement.selectionStart === 0) {
+				event.preventDefault();
 
-			// If we're not already navigating history, save current input
-			if (historyIndex === -1) {
-				tempCurrentInput = lineText;
-			}
+				// If we're not already navigating history, save current input
+				if (historyIndex === -1) {
+					tempCurrentInput = lineText;
+				}
 
-			// Move up in history (towards older items)
-			if (historyIndex < historyItems.length - 1) {
-				historyIndex++;
-				lineText = historyItems[historyItems.length - 1 - historyIndex];
-				dispatch('historyFocus', historyIndex);
+				// Move up in history (towards older items)
+				if (historyIndex < historyItems.length - 1) {
+					historyIndex++;
+					lineText = historyItems[historyItems.length - 1 - historyIndex];
+					dispatch('historyFocus', historyIndex);
+
+					// Move cursor to end of text
+					setTimeout(() => {
+						if (textareaElement) {
+							textareaElement.selectionStart = textareaElement.selectionEnd = lineText.length;
+						}
+					}, 0);
+				}
 			}
 		} else if (event.key === 'ArrowDown') {
-			event.preventDefault();
+			// Only handle history navigation if we're already in history mode
+			if (historyIndex !== -1) {
+				event.preventDefault();
 
-			// Move down in history (towards current)
-			if (historyIndex > 0) {
-				historyIndex--;
-				lineText = historyItems[historyItems.length - 1 - historyIndex];
-				dispatch('historyFocus', historyIndex);
-			} else if (historyIndex === 0) {
-				// Return to current input
-				historyIndex = -1;
-				lineText = tempCurrentInput;
-				dispatch('historyFocus', -1);
+				// Move down in history (towards current)
+				if (historyIndex > 0) {
+					historyIndex--;
+					lineText = historyItems[historyItems.length - 1 - historyIndex];
+					dispatch('historyFocus', historyIndex);
+
+					// Move cursor to end of text
+					setTimeout(() => {
+						if (textareaElement) {
+							textareaElement.selectionStart = textareaElement.selectionEnd = lineText.length;
+						}
+					}, 0);
+				} else if (historyIndex === 0) {
+					// Return to current input
+					historyIndex = -1;
+					lineText = tempCurrentInput;
+					dispatch('historyFocus', -1);
+
+					// Move cursor to end of text
+					setTimeout(() => {
+						if (textareaElement) {
+							textareaElement.selectionStart = textareaElement.selectionEnd = lineText.length;
+						}
+					}, 0);
+				}
 			}
 		} else if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && historyIndex !== -1) {
 			// If user starts typing while in history, return to current input

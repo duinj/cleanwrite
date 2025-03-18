@@ -82,14 +82,34 @@
 		font-size: 1.1rem;
 		transition:
 			opacity 0.3s ease,
-			background-color 0.2s ease;
+			background-color 0.2s ease,
+			transform 0.2s ease,
+			padding 0.2s ease,
+			margin 0.2s ease;
 	}
 
 	.written-text p.focused {
-		background-color: rgba(0, 0, 0, 0.05);
+		background-color: rgba(0, 0, 0, 0.08);
 		border-radius: 4px;
-		padding: 4px 8px;
-		margin-left: -8px;
-		margin-right: -8px;
+		padding: 8px 12px;
+		margin-left: -12px;
+		margin-right: -12px;
+		transform: translateX(4px);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+		position: relative;
+		z-index: 2;
+	}
+
+	/* Add a subtle indicator to show this is the focused item */
+	.written-text p.focused::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 3px;
+		background-color: rgba(0, 0, 0, 0.2);
+		border-top-left-radius: 4px;
+		border-bottom-left-radius: 4px;
 	}
 </style>
