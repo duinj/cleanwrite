@@ -13,6 +13,7 @@
 	// History navigation
 	let historyIndex = -1; // -1 means current input (not navigating history)
 	let tempCurrentInput = ''; // Store current input when navigating history
+	let isNavigatingHistory = false; // Flag to indicate if we're viewing history
 
 	// Event dispatcher to communicate with parent component
 	const dispatch = createEventDispatcher<{
@@ -30,6 +31,7 @@
 			dispatch('lineSubmit', lineText);
 			lineText = '';
 			historyIndex = -1; // Reset history index after submission
+			isNavigatingHistory = false;
 		} else if (event.key === 'ArrowUp' && historyItems.length > 0) {
 			// Only start history navigation if we're at the beginning of the input
 			// or if we're already navigating, to avoid interfering with normal cursor movement
@@ -45,6 +47,7 @@
 				if (historyIndex < historyItems.length - 1) {
 					historyIndex++;
 					lineText = historyItems[historyItems.length - 1 - historyIndex];
+					isNavigatingHistory = true;
 					dispatch('historyFocus', historyIndex);
 
 					// Move cursor to end of text
@@ -76,6 +79,7 @@
 					// Return to current input
 					historyIndex = -1;
 					lineText = tempCurrentInput;
+					isNavigatingHistory = false;
 					dispatch('historyFocus', -1);
 
 					// Move cursor to end of text
@@ -89,6 +93,7 @@
 		} else if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && historyIndex !== -1) {
 			// If user starts typing while in history, return to current input
 			historyIndex = -1;
+			isNavigatingHistory = false;
 			dispatch('historyFocus', -1);
 		}
 	}
@@ -127,7 +132,12 @@
 	});
 </script>
 
-<div class="input-line">
+<div class="input-line" class:history-mode={isNavigatingHistory}>
+	{#if isNavigatingHistory}
+		<div class="history-indicator">
+			<span class="history-label">History ({historyIndex + 1}/{historyItems.length})</span>
+		</div>
+	{/if}
 	<textarea
 		bind:this={textareaElement}
 		bind:value={lineText}
@@ -137,6 +147,7 @@
 		spellcheck="true"
 		rows="1"
 		autocomplete="off"
+		class:history-view={isNavigatingHistory}
 	></textarea>
 </div>
 
@@ -152,6 +163,30 @@
 		background-color: var(--paper-color);
 		padding: 0;
 		z-index: 10;
+		transition:
+			background-color 0.2s ease,
+			border-color 0.2s ease;
+	}
+
+	.input-line.history-mode {
+		background-color: rgba(248, 245, 233, 0.95);
+		border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: 4px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	}
+
+	.history-indicator {
+		position: absolute;
+		top: -24px;
+		right: 0;
+		font-size: 0.8rem;
+		color: #888;
+	}
+
+	.history-label {
+		background: rgba(0, 0, 0, 0.05);
+		padding: 2px 8px;
+		border-radius: 10px;
 	}
 
 	textarea {
@@ -168,6 +203,17 @@
 		min-height: 1.5em;
 		line-height: 1.5;
 		display: block;
+		transition:
+			background-color 0.2s ease,
+			padding 0.2s ease;
+	}
+
+	textarea.history-view {
+		background-color: rgba(0, 0, 0, 0.03);
+		color: #000;
+		border-radius: 4px;
+		padding: 8px 10px;
+		font-style: italic;
 	}
 
 	textarea::placeholder {
