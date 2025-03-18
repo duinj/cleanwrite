@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 
 	// Component props
 	let { lineText = '' } = $props();
@@ -51,6 +51,11 @@
 			textareaElement.style.height = textareaElement.scrollHeight + 'px';
 		}
 	}
+
+	onMount(() => {
+		// Ensure textarea starts with correct height
+		adjustTextareaHeight();
+	});
 </script>
 
 <div class="input-line">
@@ -69,14 +74,14 @@
 <style>
 	.input-line {
 		position: fixed;
-		bottom: 35vh;
+		top: 50%; /* Center vertically */
 		left: 50%;
-		transform: translateX(-50%);
+		transform: translate(-50%, -50%); /* Center both horizontally and vertically */
 		width: calc(100% - 40px);
 		max-width: 760px;
 		border-bottom: 1px solid var(--line-color);
 		background-color: var(--paper-color);
-		padding: 10px 0;
+		padding: 0;
 		z-index: 10;
 	}
 
@@ -93,10 +98,12 @@
 		overflow: hidden; /* Hide scrollbar */
 		min-height: 1.5em;
 		line-height: 1.5;
+		display: block;
 	}
 
 	textarea::placeholder {
 		color: #aaa;
 		opacity: 0.7;
+		line-height: 1.5;
 	}
 </style>
