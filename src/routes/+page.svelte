@@ -40,7 +40,6 @@
 	 */
 	function handleHistoryFocus(event: CustomEvent<number>) {
 		focusedHistoryIndex = event.detail;
-		// No need to scroll since we're displaying the focused item in the input line
 	}
 
 	onMount(() => {
@@ -49,14 +48,23 @@
 	});
 </script>
 
-<WrittenText
-	lines={writtenText}
-	focusedIndex={focusedHistoryIndex}
-	bind:this={writtenTextComponent}
-/>
-<Line
-	bind:this={lineComponent}
-	historyItems={writtenText}
-	on:lineSubmit={handleLineSubmit}
-	on:historyFocus={handleHistoryFocus}
-/>
+<div class="app-container">
+	<WrittenText
+		lines={writtenText}
+		focusedIndex={focusedHistoryIndex}
+		bind:this={writtenTextComponent}
+	/>
+	<Line
+		bind:this={lineComponent}
+		historyItems={writtenText}
+		on:lineSubmit={handleLineSubmit}
+		on:historyFocus={handleHistoryFocus}
+	/>
+</div>
+
+<style>
+	.app-container {
+		position: relative;
+		min-height: 100vh;
+	}
+</style>

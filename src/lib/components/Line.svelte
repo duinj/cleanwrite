@@ -32,6 +32,7 @@
 			lineText = '';
 			historyIndex = -1; // Reset history index after submission
 			isNavigatingHistory = false;
+			dispatch('historyFocus', -1); // Ensure focused index is reset
 		} else if (event.key === 'ArrowUp' && historyItems.length > 0) {
 			// Only start history navigation if we're at the beginning of the input
 			// or if we're already navigating, to avoid interfering with normal cursor movement
@@ -136,6 +137,7 @@
 	{#if isNavigatingHistory}
 		<div class="history-indicator">
 			<span class="history-label">History ({historyIndex + 1}/{historyItems.length})</span>
+			<span class="history-nav-hint">↑ older · ↓ newer</span>
 		</div>
 	{/if}
 	<textarea
@@ -165,28 +167,40 @@
 		z-index: 10;
 		transition:
 			background-color 0.2s ease,
-			border-color 0.2s ease;
+			border-color 0.2s ease,
+			box-shadow 0.2s ease;
 	}
 
 	.input-line.history-mode {
-		background-color: rgba(248, 245, 233, 0.95);
-		border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-		border-radius: 4px;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+		background-color: rgba(248, 245, 233, 0.98);
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: 6px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 	}
 
 	.history-indicator {
 		position: absolute;
-		top: -24px;
-		right: 0;
-		font-size: 0.8rem;
-		color: #888;
+		top: -30px;
+		left: 0;
+		font-size: 0.85rem;
+		color: #666;
+		width: 100%;
+		display: flex;
+		justify-content: space-between;
+		padding: 0 4px;
 	}
 
 	.history-label {
 		background: rgba(0, 0, 0, 0.05);
-		padding: 2px 8px;
-		border-radius: 10px;
+		padding: 3px 10px;
+		border-radius: 12px;
+		font-weight: 500;
+	}
+
+	.history-nav-hint {
+		font-size: 0.75rem;
+		color: #888;
+		opacity: 0.9;
 	}
 
 	textarea {
@@ -212,7 +226,7 @@
 		background-color: rgba(0, 0, 0, 0.03);
 		color: #000;
 		border-radius: 4px;
-		padding: 8px 10px;
+		padding: 10px 12px;
 		font-style: italic;
 	}
 
