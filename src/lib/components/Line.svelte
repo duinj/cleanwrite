@@ -5,7 +5,7 @@
 	let { lineText = '' } = $props();
 
 	// DOM reference
-	let inputElement: HTMLInputElement;
+	let textareaElement: HTMLTextAreaElement;
 
 	// Event dispatcher to communicate with parent component
 	const dispatch = createEventDispatcher<{
@@ -17,7 +17,8 @@
 	 * Handle keydown events on the input line
 	 */
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter' && lineText.trim()) {
+		if (event.key === 'Enter' && !event.shiftKey && lineText.trim()) {
+			event.preventDefault(); // Prevent default Enter behavior
 			dispatch('lineSubmit', lineText);
 			lineText = '';
 		}
@@ -27,7 +28,7 @@
 	 * Focus the input element
 	 */
 	export function focus() {
-		inputElement?.focus();
+		textareaElement?.focus();
 	}
 
 	/**
@@ -35,19 +36,34 @@
 	 */
 	function handleInput() {
 		dispatch('textChange', lineText);
+		// Auto-resize the textarea
+		adjustTextareaHeight();
+	}
+
+	/**
+	 * Adjust textarea height to fit content
+	 */
+	function adjustTextareaHeight() {
+		if (textareaElement) {
+			// Reset height first
+			textareaElement.style.height = 'auto';
+			// Then set height to scrollHeight
+			textareaElement.style.height = textareaElement.scrollHeight + 'px';
+		}
 	}
 </script>
 
 <div class="input-line">
-	<input
-		bind:this={inputElement}
+	<textarea
+		bind:this={textareaElement}
 		bind:value={lineText}
 		on:keydown={handleKeydown}
 		on:input={handleInput}
 		placeholder="Write here..."
 		spellcheck="true"
+		rows="1"
 		autocomplete="off"
-	/>
+	></textarea>
 </div>
 
 <style>
@@ -64,7 +80,7 @@
 		z-index: 10;
 	}
 
-	input {
+	textarea {
 		width: 100%;
 		padding: 8px 0;
 		border: none;
@@ -73,9 +89,13 @@
 		font-size: 1.1rem;
 		color: inherit;
 		outline: none;
+		resize: none;
+		overflow: hidden; /* Hide scrollbar */
+		min-height: 1.5em;
+		line-height: 1.5;
 	}
 
-	input::placeholder {
+	textarea::placeholder {
 		color: #aaa;
 		opacity: 0.7;
 	}
