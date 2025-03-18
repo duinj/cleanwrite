@@ -42,6 +42,23 @@
 		focusedHistoryIndex = event.detail;
 	}
 
+	/**
+	 * Handle when a history item is edited
+	 */
+	function handleHistoryEdit(event: CustomEvent<{ index: number; text: string }>) {
+		const { index, text } = event.detail;
+
+		if (index >= 0 && index < writtenText.length) {
+			// Update the history item at the specific index
+			const position = writtenText.length - 1 - index;
+
+			// Create a new array with the updated item
+			const updatedHistory = [...writtenText];
+			updatedHistory[position] = text;
+			writtenText = updatedHistory;
+		}
+	}
+
 	onMount(() => {
 		// Focus the input field when the component is mounted
 		lineComponent.focus();
@@ -59,6 +76,7 @@
 		historyItems={writtenText}
 		on:lineSubmit={handleLineSubmit}
 		on:historyFocus={handleHistoryFocus}
+		on:historyEdit={handleHistoryEdit}
 	/>
 </div>
 

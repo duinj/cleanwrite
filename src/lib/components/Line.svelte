@@ -14,12 +14,14 @@
 	let historyIndex = -1; // -1 means current input (not navigating history)
 	let tempCurrentInput = ''; // Store current input when navigating history
 	let isNavigatingHistory = false; // Flag to indicate if we're viewing history
+	let originalHistoryItem = ''; // Store the original history item text before editing
 
 	// Event dispatcher to communicate with parent component
 	const dispatch = createEventDispatcher<{
 		lineSubmit: string;
 		textChange: string;
 		historyFocus: number; // Added event for history focus index
+		historyEdit: { index: number; text: string }; // Added event for editing history items
 	}>();
 
 	/**
@@ -28,9 +30,21 @@
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Enter' && !event.shiftKey && lineText.trim()) {
 			event.preventDefault(); // Prevent default Enter behavior
-			dispatch('lineSubmit', lineText);
-			lineText = '';
-			historyIndex = -1; // Reset history index after submission
+
+			if (historyIndex !== -1) {
+				// If we're in a history item, update it instead of submitting new
+				dispatch('historyEdit', { index: historyIndex, text: lineText });
+				isNavigatingHistory = false;
+				historyIndex = -1;
+				dispatch('historyFocus', -1);
+				lineText = tempCurrentInput; // Return to what was being typed
+			} else {
+				// Normal submission of new line
+				dispatch('lineSubmit', lineText);
+				lineText = '';
+			}
+
+			historyIndex = -1; // Reset history index after submission/edit
 			isNavigatingHistory = false;
 			dispatch('historyFocus', -1); // Ensure focused index is reset
 		} else if (event.key === 'ArrowUp' && historyItems.length > 0) {
@@ -42,12 +56,16 @@
 				// If we're not already navigating history, save current input
 				if (historyIndex === -1) {
 					tempCurrentInput = lineText;
+				} else if (lineText !== originalHistoryItem) {
+					// If we've made changes to a history item, save them
+					dispatch('historyEdit', { index: historyIndex, text: lineText });
 				}
 
 				// Move up in history (towards older items)
 				if (historyIndex < historyItems.length - 1) {
 					historyIndex++;
 					lineText = historyItems[historyItems.length - 1 - historyIndex];
+					originalHistoryItem = lineText; // Save original before any edits
 					isNavigatingHistory = true;
 					dispatch('historyFocus', historyIndex);
 
@@ -64,10 +82,16 @@
 			if (historyIndex !== -1) {
 				event.preventDefault();
 
+				// If we've made changes to the current history item, save them
+				if (lineText !== originalHistoryItem) {
+					dispatch('historyEdit', { index: historyIndex, text: lineText });
+				}
+
 				// Move down in history (towards current)
 				if (historyIndex > 0) {
 					historyIndex--;
 					lineText = historyItems[historyItems.length - 1 - historyIndex];
+					originalHistoryItem = lineText; // Save original before any edits
 					dispatch('historyFocus', historyIndex);
 
 					// Move cursor to end of text
@@ -91,10 +115,11 @@
 					}, 0);
 				}
 			}
-		} else if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && historyIndex !== -1) {
-			// If user starts typing while in history, return to current input
+		} else if (event.key === 'Escape' && historyIndex !== -1) {
+			// Escape key cancels history navigation without saving changes
 			historyIndex = -1;
 			isNavigatingHistory = false;
+			lineText = tempCurrentInput;
 			dispatch('historyFocus', -1);
 		}
 	}
@@ -136,8 +161,8 @@
 <div class="input-line" class:history-mode={isNavigatingHistory}>
 	{#if isNavigatingHistory}
 		<div class="history-indicator">
-			<span class="history-label">History ({historyIndex + 1}/{historyItems.length})</span>
-			<span class="history-nav-hint">↑ older · ↓ newer</span>
+			<span class="history-label">Editing History ({historyIndex + 1}/{historyItems.length})</span>
+			<span class="history-nav-hint">↑ older · ↓ newer · Enter save · Esc cancel</span>
 		</div>
 	{/if}
 	<textarea
@@ -145,7 +170,7 @@
 		bind:value={lineText}
 		on:keydown={handleKeydown}
 		on:input={handleInput}
-		placeholder="Write here..."
+		placeholder={isNavigatingHistory ? 'Edit history...' : 'Write here...'}
 		spellcheck="true"
 		rows="1"
 		autocomplete="off"
