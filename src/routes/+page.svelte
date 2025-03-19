@@ -1,88 +1,81 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import History from '$lib/components/History.svelte';
 	import Line from '$lib/components/Line.svelte';
-	import WrittenText from '$lib/components/WrittenText.svelte';
+	import type { HistoryItem } from '$lib/types';
 
-	let writtenText: string[] = [];
-	let focusedHistoryIndex: number = -1;
-	let lineComponent: Line;
-	let writtenTextComponent: WrittenText;
+	let historyItems: HistoryItem[] = [];
+	let currentText = '';
+	let focusedIndex: number | null = null;
 
-	/**
-	 * Handle when a line is submitted from the Line component
-	 */
-	function handleLineSubmit(event: CustomEvent<string>) {
-		writtenText = [...writtenText, event.detail];
-		focusedHistoryIndex = -1; // Reset focus when submitting new line
+	function handleSubmit(text: string) {
+		if (text.trim() === '') return;
 
-		// Reset the scroll position after DOM update
-		setTimeout(() => {
-			// Calculate appropriate scroll position
-			const viewportHeight = window.innerHeight;
+		const newItem: HistoryItem = {
+			id: Date.now().toString(),
+			text,
+			timestamp: new Date()
+		};
 
-			// Adjust scroll position to account for top padding and ensure new text is visible
-			if (writtenText.length === 1) {
-				// For the first line, just make sure we're at the top of the document
-				window.scrollTo(0, 0);
-			} else {
-				// For subsequent lines, position properly relative to input line
-				const scrollPosition = document.body.scrollHeight - viewportHeight * 0.65;
-				window.scrollTo(0, scrollPosition);
+		historyItems = [...historyItems, newItem];
+		currentText = '';
+		focusedIndex = null;
+	}
+
+	function handleKeyNavigation(direction: 'up' | 'down') {
+		if (historyItems.length === 0) return;
+
+		if (direction === 'up') {
+			if (focusedIndex === null) {
+				focusedIndex = historyItems.length - 1;
+			} else if (focusedIndex > 0) {
+				focusedIndex--;
 			}
+		} else if (direction === 'down') {
+			if (focusedIndex !== null) {
+				if (focusedIndex < historyItems.length - 1) {
+					focusedIndex++;
+				} else {
+					focusedIndex = null;
+					currentText = '';
+				}
+			}
+		}
 
-			// Enhance blur effect
-			writtenTextComponent.enhanceBlur();
-		}, 10);
-	}
-
-	/**
-	 * Handle when a history item is focused
-	 */
-	function handleHistoryFocus(event: CustomEvent<number>) {
-		focusedHistoryIndex = event.detail;
-	}
-
-	/**
-	 * Handle when a history item is edited
-	 */
-	function handleHistoryEdit(event: CustomEvent<{ index: number; text: string }>) {
-		const { index, text } = event.detail;
-
-		if (index >= 0 && index < writtenText.length) {
-			// Update the history item at the specific index
-			const position = writtenText.length - 1 - index;
-
-			// Create a new array with the updated item
-			const updatedHistory = [...writtenText];
-			updatedHistory[position] = text;
-			writtenText = updatedHistory;
+		if (focusedIndex !== null) {
+			currentText = historyItems[focusedIndex].text;
 		}
 	}
 
 	onMount(() => {
-		// Focus the input field when the component is mounted
-		lineComponent.focus();
+		document.title = 'CleanWrite';
 	});
 </script>
 
-<div class="app-container">
-	<WrittenText
-		lines={writtenText}
-		focusedIndex={focusedHistoryIndex}
-		bind:this={writtenTextComponent}
-	/>
-	<Line
-		bind:this={lineComponent}
-		historyItems={writtenText}
-		on:lineSubmit={handleLineSubmit}
-		on:historyFocus={handleHistoryFocus}
-		on:historyEdit={handleHistoryEdit}
-	/>
-</div>
+<main class="flex h-screen flex-col bg-white">
+	<div class="container mx-auto flex h-full max-w-3xl flex-col py-8">
+		<h1 class="mb-12 text-center text-2xl font-light tracking-wide text-gray-700">clean write</h1>
+
+		<div class="flex flex-grow flex-col overflow-hidden">
+			<History items={historyItems} {focusedIndex} />
+			<Line value={currentText} onSubmit={handleSubmit} onKeyNavigation={handleKeyNavigation} />
+		</div>
+	</div>
+</main>
 
 <style>
-	.app-container {
-		position: relative;
-		min-height: 100vh;
+	:global(body) {
+		margin: 0;
+		font-family:
+			'Inter',
+			-apple-system,
+			BlinkMacSystemFont,
+			system-ui,
+			sans-serif;
+		background-color: white;
+	}
+
+	:global(*) {
+		transition: all 0.2s ease;
 	}
 </style>

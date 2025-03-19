@@ -1,25 +1,50 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-	--paper-color: #f8f5e9;
+	--bg-color: #ffffff;
 	--text-color: #333333;
-	--line-color: #ccc;
-	--fade-color-transparent: rgba(248, 245, 233, 0);
-	--fade-color-light: rgba(248, 245, 233, 0.7);
-	--fade-color-solid: rgba(248, 245, 233, 1);
+	--accent-color: #6366f1;
+	--secondary-color: #f5f5f5;
 }
 
 body {
-	background-color: var(--paper-color);
+	background-color: var(--bg-color);
 	color: var(--text-color);
-	font-family: Georgia, 'Times New Roman', Times, serif;
+	font-family:
+		'Inter',
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		sans-serif;
 	line-height: 1.6;
 	margin: 0;
 	padding: 0;
 	min-height: 100vh;
 	overflow-x: hidden;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 * {
 	box-sizing: border-box;
+}
+
+/* Clean scrollbar styling */
+::-webkit-scrollbar {
+	width: 4px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.06);
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(0, 0, 0, 0.1);
 }
