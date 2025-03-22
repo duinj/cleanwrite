@@ -6,7 +6,7 @@
 	--bg-color: #ffffff;
 	--text-color: #333333;
 	--accent-color: #6366f1;
-	--secondary-color: #f5f5f5;
+	--secondary-color: #f9f9f9;
 }
 
 body {
@@ -29,9 +29,10 @@ body {
 
 * {
 	box-sizing: border-box;
+	scroll-behavior: smooth;
 }
 
-/* Clean scrollbar styling */
+/* Modern scrollbar styling */
 ::-webkit-scrollbar {
 	width: 4px;
 }
@@ -41,10 +42,34 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.06);
+	background: rgba(0, 0, 0, 0.04);
 	border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: rgba(0, 0, 0, 0.1);
+	background: rgba(0, 0, 0, 0.08);
+}
+
+/* Add global modern transitions */
+button,
+a,
+input,
+textarea {
+	transition: all 0.2s ease;
+}
+
+/* Container centering */
+.container {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Improve focus styles */
+:focus {
+	outline: none;
+}
+
+::selection {
+	background-color: var(--accent-color);
+	color: white;
 }

@@ -56,25 +56,38 @@
 	});
 </script>
 
-<div class="flex justify-center border-t border-gray-100 pt-6">
-	<div class="relative w-3/4 max-w-md rounded-lg bg-gray-50 p-3">
-		<textarea
-			bind:this={inputElement}
-			bind:value
-			on:keydown={handleKeyDown}
-			on:input={adjustHeight}
-			placeholder="Write something..."
-			class="max-h-[200px] min-h-[56px] w-full resize-none overflow-y-auto bg-transparent outline-none focus:outline-none"
-			rows="1"
-		></textarea>
-	</div>
+<div
+	class="writing-bar shadow-floating flex w-full max-w-2xl items-center rounded-full bg-white px-6 py-0.5"
+>
+	<textarea
+		bind:this={inputElement}
+		bind:value
+		on:keydown={handleKeyDown}
+		on:input={adjustHeight}
+		placeholder="Write something..."
+		class="max-h-[120px] min-h-[38px] w-full resize-none overflow-y-auto bg-transparent outline-none focus:outline-none"
+		rows="1"
+	></textarea>
 </div>
 
 <style>
+	.writing-bar {
+		border: 1px solid rgba(230, 230, 230, 0.7);
+		backdrop-filter: blur(8px);
+		transition: all 0.2s ease;
+	}
+
+	.writing-bar:focus-within {
+		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+		transform: translateY(-2px);
+		border-color: rgba(220, 220, 220, 1);
+	}
+
 	textarea {
 		border: none;
 		font-family: inherit;
-		line-height: 1.6;
-		font-size: 1rem;
+		line-height: 1.5;
+		font-size: 0.95rem;
+		padding: 9px 0;
 	}
 </style>

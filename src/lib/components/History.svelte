@@ -17,19 +17,20 @@
 	let historyContainer: HTMLDivElement;
 </script>
 
-<div class="flex flex-grow justify-center overflow-y-auto px-4" bind:this={historyContainer}>
-	<div class="w-3/4 max-w-md">
+<div class="flex flex-grow justify-center overflow-y-auto" bind:this={historyContainer}>
+	<div class="w-full">
 		{#if items.length === 0}
-			<div class="py-16 text-center text-gray-300 italic">Begin writing...</div>
+			<div class="flex h-full items-center justify-center">
+				<div class="py-16 text-center text-gray-300 italic">Begin writing...</div>
+			</div>
 		{:else}
-			<div class="flex flex-col gap-5 py-4">
+			<div class="flex flex-col gap-6 py-4">
 				{#each items as item, i (item.id)}
 					<div
-						class="transform px-1 py-2 transition-all duration-200"
+						class="transform rounded-lg px-4 py-3 transition-all duration-200"
 						class:opacity-40={focusedIndex !== null && focusedIndex !== i}
-						class:border-l-2={focusedIndex === i}
-						class:border-l-indigo-400={focusedIndex === i}
-						class:pl-3={focusedIndex === i}
+						class:bg-gray-50={focusedIndex === i}
+						class:shadow-sm={focusedIndex === i}
 						in:fly={{ y: 15, duration: 200 }}
 					>
 						<p class="leading-relaxed break-words whitespace-pre-wrap">
@@ -41,3 +42,10 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	div :global(p) {
+		margin: 0;
+		line-height: 1.7;
+	}
+</style>
