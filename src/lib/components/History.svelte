@@ -18,7 +18,7 @@
 </script>
 
 <div class="flex flex-grow justify-center overflow-y-auto" bind:this={historyContainer}>
-	<div class="w-full">
+	<div class="mx-auto w-full max-w-3xl">
 		{#if items.length === 0}
 			<div class="flex h-full items-center justify-center">
 				<div class="py-16 text-center text-gray-300 italic">Begin writing...</div>
