@@ -53,7 +53,7 @@
 </script>
 
 <main class="relative flex min-h-screen flex-col items-center justify-center bg-white">
-	<div class="container flex h-full w-full max-w-3xl flex-grow flex-col px-4 pt-8 pb-28">
+	<div class="container flex h-full w-full flex-grow flex-col px-4 pt-8 pb-28">
 		<div class="flex flex-grow flex-col overflow-hidden">
 			<History items={historyItems} {focusedIndex} />
 		</div>
