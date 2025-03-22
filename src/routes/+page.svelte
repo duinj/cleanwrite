@@ -59,7 +59,7 @@
 		</div>
 	</div>
 
-	<div class="fixed right-0 bottom-0 left-0 z-10 flex justify-center pb-8">
+	<div class="fixed right-0 bottom-0 left-0 z-10 flex w-full justify-center pb-8">
 		<Line value={currentText} onSubmit={handleSubmit} onKeyNavigation={handleKeyNavigation} />
 	</div>
 </main>

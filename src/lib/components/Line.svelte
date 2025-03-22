@@ -57,7 +57,7 @@
 </script>
 
 <div
-	class="writing-bar shadow-floating flex w-[85%] items-center rounded-full bg-white px-8 py-0.5"
+	class="writing-bar shadow-floating flex w-[80%] max-w-4xl items-center rounded-full bg-white px-6 py-0.5"
 >
 	<textarea
 		bind:this={inputElement}
@@ -65,7 +65,7 @@
 		on:keydown={handleKeyDown}
 		on:input={adjustHeight}
 		placeholder="Write something..."
-		class="max-h-[120px] min-h-[38px] w-full resize-none overflow-y-auto bg-transparent outline-none focus:outline-none"
+		class="max-h-[120px] min-h-[38px] w-full resize-none overflow-y-auto bg-transparent px-2 outline-none focus:outline-none"
 		rows="1"
 	></textarea>
 </div>
@@ -88,6 +88,13 @@
 		font-family: inherit;
 		line-height: 1.5;
 		font-size: 0.95rem;
-		padding: 9px 0;
+		padding: 9px 10px;
+		color: #333;
+	}
+
+	textarea::placeholder {
+		color: #9ca3af;
+		opacity: 0.8;
+		font-weight: 400;
 	}
 </style>

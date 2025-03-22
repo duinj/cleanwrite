@@ -21,7 +21,7 @@
 	<div class="mx-auto w-[60%]">
 		{#if items.length === 0}
 			<div class="flex h-full items-center justify-center">
-				<div class="py-16 text-center text-gray-300 italic">Begin writing...</div>
+				<div class="py-16 text-center text-gray-300 italic"></div>
 			</div>
 		{:else}
 			<div class="flex flex-col gap-6 py-4">
