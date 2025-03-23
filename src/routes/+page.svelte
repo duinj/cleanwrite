@@ -72,13 +72,13 @@
 
 <main class="relative min-h-screen bg-white">
 	<div class="container mx-auto pt-4">
-		<div class="h-[calc(50vh-60px)] overflow-hidden">
+		<div class="h-[calc(50vh-80px)] overflow-hidden">
 			<History items={historyItems} {focusedIndex} {isEditing} />
 		</div>
 	</div>
 
 	<div
-		class="fixed top-1/2 right-0 left-0 z-10 flex w-full -translate-y-1/2 transform justify-center"
+		class="fixed top-1/2 right-0 left-0 z-10 flex w-full -translate-y-1/2 transform flex-col justify-center"
 	>
 		<Line
 			value={currentText}
