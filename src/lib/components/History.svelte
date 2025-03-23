@@ -2,9 +2,14 @@
 	import { fly } from 'svelte/transition';
 	import type { HistoryItem } from '$lib/types';
 
-	let { items, focusedIndex } = $props<{
+	let {
+		items,
+		focusedIndex,
+		isEditing = false
+	} = $props<{
 		items: HistoryItem[];
 		focusedIndex: number | null;
+		isEditing?: boolean;
 	}>();
 
 	$effect(() => {
@@ -46,6 +51,8 @@
 						class:opacity-40={focusedIndex !== null && focusedIndex !== i}
 						class:bg-gray-50={focusedIndex === i}
 						class:shadow-sm={focusedIndex === i}
+						class:border-2={focusedIndex === i && isEditing}
+						class:border-primary={focusedIndex === i && isEditing}
 						in:fly={{ y: 15, duration: 200 }}
 					>
 						<p class="leading-relaxed break-words whitespace-pre-wrap">

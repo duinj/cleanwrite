@@ -1,8 +1,18 @@
 <script lang="ts">
-	let { value, onSubmit, onKeyNavigation } = $props<{
+	let {
+		value,
+		onSubmit,
+		onKeyNavigation,
+		onEscape,
+		isEditing = false,
+		focusedIndex = null
+	} = $props<{
 		value: string;
 		onSubmit: (text: string) => void;
 		onKeyNavigation: (direction: 'up' | 'down') => void;
+		onEscape?: () => void;
+		isEditing?: boolean;
+		focusedIndex?: number | null;
 	}>();
 
 	let inputElement: HTMLTextAreaElement;
@@ -33,6 +43,9 @@
 					inputElement.selectionEnd = inputElement.value.length;
 				}
 			}, 0);
+		} else if (event.key === 'Escape' && onEscape) {
+			event.preventDefault();
+			onEscape();
 		}
 	}
 
@@ -58,16 +71,21 @@
 
 <div
 	class="writing-bar shadow-floating flex w-[56%] max-w-2xl items-center rounded-full bg-white px-6 py-0.5"
+	class:border-2={isEditing}
+	class:border-primary={isEditing}
 >
 	<textarea
 		bind:this={inputElement}
 		bind:value
 		on:keydown={handleKeyDown}
 		on:input={adjustHeight}
-		placeholder="Write something..."
+		placeholder={isEditing ? 'Edit entry...' : 'Write something...'}
 		class="max-h-[120px] min-h-[38px] w-full resize-none overflow-y-auto bg-transparent px-2 outline-none focus:outline-none"
 		rows="1"
 	></textarea>
+	{#if isEditing}
+		<div class="ml-2 text-xs text-gray-400">Editing (Esc to cancel)</div>
+	{/if}
 </div>
 
 <style>
@@ -81,6 +99,10 @@
 		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 		transform: translateY(-2px);
 		border-color: rgba(220, 220, 220, 1);
+	}
+
+	.writing-bar.border-primary {
+		border-color: var(--accent-color, #6366f1);
 	}
 
 	textarea {
