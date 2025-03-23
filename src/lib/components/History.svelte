@@ -10,21 +10,23 @@
 	$effect(() => {
 		// When a new item is added, scroll to the bottom
 		if (historyContainer && items.length > 0 && focusedIndex === null) {
-			historyContainer.scrollTop = historyContainer.scrollHeight;
+			setTimeout(() => {
+				historyContainer.scrollTop = historyContainer.scrollHeight;
+			}, 10);
 		}
 	});
 
 	let historyContainer: HTMLDivElement;
 </script>
 
-<div class="flex flex-grow justify-center overflow-y-auto" bind:this={historyContainer}>
-	<div class="mx-auto w-[56%] max-w-2xl">
+<div class="h-full w-full overflow-y-auto" bind:this={historyContainer}>
+	<div class="mx-auto w-[56%] max-w-2xl py-4">
 		{#if items.length === 0}
 			<div class="flex h-full items-center justify-center">
-				<div class="py-16 text-gray-300 italic"></div>
+				<div class="text-gray-300 italic"></div>
 			</div>
 		{:else}
-			<div class="flex flex-col gap-6 py-4">
+			<div class="flex flex-col gap-6">
 				{#each items as item, i (item.id)}
 					<div
 						class="transform rounded-lg px-4 py-3 transition-all duration-200"

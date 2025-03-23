@@ -52,14 +52,16 @@
 	});
 </script>
 
-<main class="relative flex min-h-screen flex-col items-center justify-center bg-white">
-	<div class="container flex h-full w-full flex-grow flex-col px-4 pt-8 pb-28">
-		<div class="flex flex-grow flex-col overflow-hidden">
+<main class="relative min-h-screen bg-white">
+	<div class="container mx-auto pt-4">
+		<div class="h-[calc(50vh-60px)] overflow-hidden">
 			<History items={historyItems} {focusedIndex} />
 		</div>
 	</div>
 
-	<div class="fixed right-0 bottom-0 left-0 z-10 flex w-full justify-center pb-8">
+	<div
+		class="fixed top-1/2 right-0 left-0 z-10 flex w-full -translate-y-1/2 transform justify-center"
+	>
 		<Line value={currentText} onSubmit={handleSubmit} onKeyNavigation={handleKeyNavigation} />
 	</div>
 </main>
