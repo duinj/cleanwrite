@@ -57,7 +57,7 @@
 </script>
 
 <div
-	class="writing-bar shadow-floating flex w-[80%] max-w-4xl items-center rounded-full bg-white px-6 py-0.5"
+	class="writing-bar shadow-floating flex w-[56%] max-w-2xl items-center rounded-full bg-white px-6 py-0.5"
 >
 	<textarea
 		bind:this={inputElement}
