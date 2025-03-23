@@ -8,10 +8,22 @@
 	}>();
 
 	$effect(() => {
+		if (!historyContainer) return;
+
 		// When a new item is added, scroll to the bottom
-		if (historyContainer && items.length > 0 && focusedIndex === null) {
+		if (items.length > 0 && focusedIndex === null) {
 			setTimeout(() => {
 				historyContainer.scrollTop = historyContainer.scrollHeight;
+			}, 10);
+		}
+		// When navigating with arrow keys, ensure the focused item is visible
+		else if (focusedIndex !== null && items.length > 0) {
+			setTimeout(() => {
+				const focusedElement = document.getElementById(`history-item-${focusedIndex}`);
+				if (focusedElement) {
+					// Scroll the element into view with some padding
+					focusedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				}
 			}, 10);
 		}
 	});
@@ -29,6 +41,7 @@
 			<div class="flex flex-col gap-6">
 				{#each items as item, i (item.id)}
 					<div
+						id="history-item-{i}"
 						class="transform rounded-lg px-4 py-3 transition-all duration-200"
 						class:opacity-40={focusedIndex !== null && focusedIndex !== i}
 						class:bg-gray-50={focusedIndex === i}
