@@ -47,9 +47,10 @@
 		} else if (event.key === 'Escape' && onEscape) {
 			event.preventDefault();
 			onEscape();
-			// Ensure focus is lost after escape
+			// Ensure focus is lost after escape and update focused state immediately
 			if (inputElement) {
 				inputElement.blur();
+				isFocused = false;
 			}
 		} else if (event.key === 'f' && !isFocused && document.activeElement !== inputElement) {
 			event.preventDefault();
@@ -75,18 +76,34 @@
 			inputElement.focus();
 		}
 
-		// Add global keyboard listener for F key
-		window.addEventListener('keydown', handleKeyDown);
-
-		// Global focus/blur detection
-		window.addEventListener('click', (e) => {
+		// Define handlers outside of addEventListener for proper cleanup
+		const handleGlobalClick = (e: MouseEvent) => {
 			if (e.target !== inputElement && !inputElement.contains(e.target as Node)) {
 				isFocused = document.activeElement === inputElement;
 			}
-		});
+		};
+
+		const handleFocusIn = () => {
+			isFocused = document.activeElement === inputElement;
+		};
+
+		const handleFocusOut = () => {
+			setTimeout(() => {
+				isFocused = document.activeElement === inputElement;
+			}, 10);
+		};
+
+		// Add global keyboard listener for F key
+		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener('click', handleGlobalClick);
+		window.addEventListener('focusin', handleFocusIn);
+		window.addEventListener('focusout', handleFocusOut);
 
 		return () => {
 			window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener('click', handleGlobalClick);
+			window.removeEventListener('focusin', handleFocusIn);
+			window.removeEventListener('focusout', handleFocusOut);
 		};
 	});
 
@@ -145,7 +162,7 @@
 				<span>ESC</span>
 				<div class="key-hint ml-2">cancel</div>
 			</div>
-		{:else if !isFocused}
+		{:else if !isFocused || document.activeElement !== inputElement}
 			<div class="keyboard-key flex-row">
 				<span>F</span>
 				<div class="key-hint ml-2">to focus</div>
