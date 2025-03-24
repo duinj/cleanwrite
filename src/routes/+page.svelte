@@ -13,22 +13,31 @@
 		if (text.trim() === '') return;
 
 		if (isEditing && focusedIndex !== null) {
-			// Update existing item
+			console.log('Updating item at index:', focusedIndex, 'with text:', text);
 			historyItems = historyItems.map((item, i) => (i === focusedIndex ? { ...item, text } : item));
 			resetState();
 		} else {
-			// Add new item
 			const newItem: HistoryItem = {
 				id: Date.now().toString(),
 				text,
 				timestamp: new Date()
 			};
+			console.log('Adding new item:', { text, id: newItem.id });
+			console.log(
+				'History before add:',
+				historyItems.map((item) => ({ id: item.id, text: item.text }))
+			);
 			historyItems = [...historyItems, newItem];
+			console.log(
+				'History after add:',
+				historyItems.map((item) => ({ id: item.id, text: item.text }))
+			);
 			resetState();
 		}
 	}
 
 	function resetState() {
+		console.log('Resetting state - clearing focus and text');
 		currentText = '';
 		focusedIndex = null;
 		isEditing = false;
@@ -37,20 +46,36 @@
 	function handleKeyNavigation(direction: 'up' | 'down') {
 		if (historyItems.length === 0) return;
 
+		const lastIndex = historyItems.length - 1;
+
+		console.groupCollapsed(`Navigation: ${direction.toUpperCase()}`);
+		console.log('Initial state:', {
+			focusedIndex,
+			historyItems: historyItems.map((item) => item.text),
+			currentText,
+			isEditing
+		});
+
 		if (direction === 'up') {
 			if (focusedIndex === null) {
-				focusedIndex = historyItems.length - 1;
+				console.log('Starting navigation from bottom (newest item)');
+				focusedIndex = lastIndex;
 				isEditing = true;
 			} else if (focusedIndex > 0) {
+				console.log(`Moving up from index ${focusedIndex} to ${focusedIndex - 1}`);
 				focusedIndex--;
 				isEditing = true;
+			} else {
+				console.log('Already at oldest item (index 0)');
 			}
 		} else if (direction === 'down') {
 			if (focusedIndex !== null) {
-				if (focusedIndex < historyItems.length - 1) {
+				if (focusedIndex < lastIndex) {
+					console.log(`Moving down from index ${focusedIndex} to ${focusedIndex + 1}`);
 					focusedIndex++;
 					isEditing = true;
 				} else {
+					console.log('Reached newest item - exiting edit mode');
 					resetState();
 				}
 			}
@@ -58,7 +83,16 @@
 
 		if (focusedIndex !== null) {
 			currentText = historyItems[focusedIndex].text;
+			console.log('New focused item:', {
+				index: focusedIndex,
+				text: currentText,
+				id: historyItems[focusedIndex].id
+			});
+		} else {
+			console.log('No focused item - clean state');
 		}
+
+		console.groupEnd();
 	}
 
 	function handleEscape() {

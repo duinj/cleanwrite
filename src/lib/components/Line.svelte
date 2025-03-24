@@ -78,7 +78,7 @@
 
 		// Define handlers outside of addEventListener for proper cleanup
 		const handleGlobalClick = (e: MouseEvent) => {
-			if (e.target !== inputElement && !inputElement.contains(e.target as Node)) {
+			if (inputElement && e.target !== inputElement && !inputElement.contains(e.target as Node)) {
 				isFocused = document.activeElement === inputElement;
 			}
 		};
@@ -93,14 +93,14 @@
 			}, 10);
 		};
 
-		// Add global keyboard listener for F key
-		window.addEventListener('keydown', handleKeyDown);
+		// Remove window keydown listener registration here
 		window.addEventListener('click', handleGlobalClick);
 		window.addEventListener('focusin', handleFocusIn);
 		window.addEventListener('focusout', handleFocusOut);
 
 		return () => {
-			window.removeEventListener('keydown', handleKeyDown);
+			// Remove this line
+			// window.removeEventListener('keydown', handleKeyDown);
 			window.removeEventListener('click', handleGlobalClick);
 			window.removeEventListener('focusin', handleFocusIn);
 			window.removeEventListener('focusout', handleFocusOut);
