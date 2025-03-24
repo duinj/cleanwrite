@@ -47,6 +47,10 @@
 		} else if (event.key === 'Escape' && onEscape) {
 			event.preventDefault();
 			onEscape();
+			// Ensure focus is lost after escape
+			if (inputElement) {
+				inputElement.blur();
+			}
 		} else if (event.key === 'f' && !isFocused && document.activeElement !== inputElement) {
 			event.preventDefault();
 			inputElement.focus();
@@ -94,6 +98,10 @@
 		// Use a small delay to ensure we get the correct focus state
 		setTimeout(() => {
 			isFocused = document.activeElement === inputElement;
+			// Force blur if we're not focused and not editing
+			if (!isFocused && !isEditing && inputElement) {
+				inputElement.blur();
+			}
 		}, 10);
 	}
 </script>
@@ -183,17 +191,21 @@
 		display: flex;
 		align-items: center;
 		animation: pulse 2s infinite;
+		background-color: rgba(243, 244, 246, 0.8);
+		padding: 4px 8px;
+		border-radius: 6px;
+		backdrop-filter: blur(4px);
 	}
 
 	.keyboard-key span {
-		background-color: #f3f4f6;
+		background-color: white;
 		border: 1px solid #e5e7eb;
 		border-radius: 4px;
-		box-shadow: 0 2px 0 #d1d5db;
-		color: #6b7280;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+		color: #4b5563;
 		display: inline-block;
 		font-size: 0.75rem;
-		font-weight: 500;
+		font-weight: 600;
 		min-width: 24px;
 		padding: 2px 6px;
 		text-align: center;
@@ -202,8 +214,9 @@
 	}
 
 	.key-hint {
-		color: #9ca3af;
-		font-size: 0.65rem;
+		color: #6b7280;
+		font-size: 0.7rem;
+		font-weight: 500;
 	}
 
 	.edit-badge {
