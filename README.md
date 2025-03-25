@@ -1,38 +1,41 @@
-# sv
+# CleanWrite
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A minimal distraction-free writing app with history and AI rewriting powered by Google Gemini.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Distraction-free writing interface
+- Text history with easy navigation
+- AI-powered text rewriting with Google Gemini
+- Keyboard shortcuts for efficient editing
+
+## Keyboard Shortcuts
+
+- `F`: Focus the input line from anywhere in the app
+- `ESC`: Cancel editing
+- `↑/↓`: Navigate through history
+- `Tab`: Rewrite current text with AI
+- `Enter`: Submit text
+
+## Setup and Development
+
+1. Clone the repository
+2. Install dependencies with `npm install`
+3. For AI rewriting feature, you need a Google Gemini API key:
+   - Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Create a `.env` file based on `.env.example` and add your API key
+   - Alternatively, you can enter your API key in the app when prompted
 
 ```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
+# Start development server
 npm run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
+# Build for production
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+## Technologies
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- [SvelteKit](https://kit.svelte.dev/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [Google Gemini API](https://ai.google.dev/)
