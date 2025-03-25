@@ -52,9 +52,22 @@
 				inputElement.blur();
 				isFocused = false;
 			}
-		} else if (event.key === 'f' && !isFocused && document.activeElement !== inputElement) {
+		}
+	}
+
+	// Handle 'f' key globally
+	function handleGlobalKeyDown(event: KeyboardEvent) {
+		// Only focus if 'f' is pressed and we're not already in an input or textarea
+		if (
+			event.key === 'f' &&
+			!isFocused &&
+			!['INPUT', 'TEXTAREA'].includes((document.activeElement as HTMLElement)?.tagName)
+		) {
 			event.preventDefault();
-			inputElement.focus();
+			if (inputElement) {
+				inputElement.focus();
+				isFocused = true;
+			}
 		}
 	}
 
@@ -93,14 +106,14 @@
 			}, 10);
 		};
 
-		// Remove window keydown listener registration here
+		// Add the global keydown listener here
+		window.addEventListener('keydown', handleGlobalKeyDown);
 		window.addEventListener('click', handleGlobalClick);
 		window.addEventListener('focusin', handleFocusIn);
 		window.addEventListener('focusout', handleFocusOut);
 
 		return () => {
-			// Remove this line
-			// window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener('keydown', handleGlobalKeyDown);
 			window.removeEventListener('click', handleGlobalClick);
 			window.removeEventListener('focusin', handleFocusIn);
 			window.removeEventListener('focusout', handleFocusOut);
