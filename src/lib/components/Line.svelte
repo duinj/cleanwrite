@@ -152,21 +152,6 @@
 			class="max-h-[120px] min-h-[38px] w-full resize-none overflow-y-auto bg-transparent px-2 outline-none focus:outline-none"
 			rows="1"
 		></textarea>
-		{#if isEditing}
-			<div class="edit-badge ml-2 text-xs">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 20 20"
-					fill="currentColor"
-					class="mr-1 h-3 w-3"
-				>
-					<path
-						d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z"
-					/>
-				</svg>
-				<span>Editing</span>
-			</div>
-		{/if}
 	</div>
 
 	<div class="mx-auto mt-2 flex w-[56%] max-w-2xl justify-end">
@@ -245,17 +230,6 @@
 
 	.key-hint {
 		color: #6b7280;
-		font-size: 0.7rem;
-		font-weight: 500;
-	}
-
-	.edit-badge {
-		display: flex;
-		align-items: center;
-		color: #6366f1;
-		background-color: rgba(99, 102, 241, 0.1);
-		border-radius: 4px;
-		padding: 2px 6px;
 		font-size: 0.7rem;
 		font-weight: 500;
 	}

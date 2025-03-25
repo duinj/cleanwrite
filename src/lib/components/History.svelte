@@ -47,7 +47,7 @@
 				{#each items as item, i (item.id)}
 					<div
 						id="history-item-{i}"
-						class="transform rounded-lg px-4 py-3 transition-all duration-200"
+						class="relative transform rounded-lg px-4 py-3 transition-all duration-200"
 						class:opacity-40={focusedIndex !== null && focusedIndex !== i}
 						class:focused-item={focusedIndex === i}
 						class:editing={focusedIndex === i && isEditing}
@@ -78,20 +78,7 @@
 	.editing {
 		background-color: rgba(240, 242, 255, 0.8);
 		box-shadow:
-			0 0 0 2px rgba(99, 102, 241, 0.2),
+			0 0 0 1px rgba(99, 102, 241, 0.15),
 			0 6px 16px rgba(0, 0, 0, 0.05);
-		position: relative;
-	}
-
-	.editing::before {
-		content: '';
-		position: absolute;
-		left: -12px;
-		top: 50%;
-		transform: translateY(-50%);
-		width: 4px;
-		height: 70%;
-		background: linear-gradient(to bottom, #6366f1, #818cf8);
-		border-radius: 4px;
 	}
 </style>
