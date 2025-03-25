@@ -49,10 +49,8 @@
 						id="history-item-{i}"
 						class="transform rounded-lg px-4 py-3 transition-all duration-200"
 						class:opacity-40={focusedIndex !== null && focusedIndex !== i}
-						class:bg-gray-50={focusedIndex === i}
-						class:shadow-sm={focusedIndex === i}
-						class:border-2={focusedIndex === i && isEditing}
-						class:border-primary={focusedIndex === i && isEditing}
+						class:focused-item={focusedIndex === i}
+						class:editing={focusedIndex === i && isEditing}
 						in:fly={{ y: 15, duration: 200 }}
 					>
 						<p class="leading-relaxed break-words whitespace-pre-wrap">
@@ -69,5 +67,31 @@
 	div :global(p) {
 		margin: 0;
 		line-height: 1.7;
+	}
+
+	.focused-item {
+		background-color: rgba(249, 250, 251, 0.8);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+		transform: scale(1.01);
+	}
+
+	.editing {
+		background-color: rgba(240, 242, 255, 0.8);
+		box-shadow:
+			0 0 0 2px rgba(99, 102, 241, 0.2),
+			0 6px 16px rgba(0, 0, 0, 0.05);
+		position: relative;
+	}
+
+	.editing::before {
+		content: '';
+		position: absolute;
+		left: -12px;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 4px;
+		height: 70%;
+		background: linear-gradient(to bottom, #6366f1, #818cf8);
+		border-radius: 4px;
 	}
 </style>
