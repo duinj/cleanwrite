@@ -232,27 +232,6 @@
 				<div class="loading-spinner"></div>
 				<span class="text-primary text-xs">Rewriting...</span>
 			</div>
-		{:else if value && value.trim() !== '' && rewriteClickable}
-			<button
-				on:click={handleRewriteClick}
-				type="button"
-				class="rewrite-button hover:text-primary ml-2 flex items-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-50"
-				title="Rewrite with AI (Tab)"
-				aria-label="Rewrite with AI"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 20 20"
-					fill="currentColor"
-					class="h-4 w-4"
-				>
-					<path
-						fill-rule="evenodd"
-						d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-			</button>
 		{/if}
 	</div>
 
