@@ -88,38 +88,67 @@
 	// Watch for input changes - simplified
 	function handleInput() {
 		adjustHeight();
-		// Check for slash command only at beginning of input
-		if (value === '/') {
+
+		// Get cursor position
+		const cursorPos = inputElement ? inputElement.selectionStart || 0 : 0;
+
+		// Check if the character at the cursor position is a slash
+		// This works regardless of where in the text the slash is typed
+		if (
+			value &&
+			value[cursorPos - 1] === '/' &&
+			(cursorPos === 1 || value[cursorPos - 2] === ' ')
+		) {
 			console.log('Slash detected in input, showing menu');
-			createDirectSlashMenu();
+			createDirectSlashMenu(cursorPos - 1);
 			selectedMenuIndex = 0;
-		} else if (value && value.startsWith('/') && value.length > 1) {
-			// User is typing after slash, close the menu
-			removeDirectSlashMenu();
-		} else if (!value || !value.startsWith('/')) {
+		} else {
 			removeDirectSlashMenu();
 		}
 	}
 
 	// DOM-based direct slash menu implementation
-	function createDirectSlashMenu() {
+	function createDirectSlashMenu(slashPosition = 0) {
 		// Remove any existing menu first
 		removeDirectSlashMenu();
 
 		// Get cursor position for menu placement
 		if (inputElement) {
-			// Calculate cursor position
-			const cursorPos = inputElement.selectionStart || 0;
-
 			// Get position of the input element
 			const rect = inputElement.getBoundingClientRect();
+
+			// Create a range to get exact cursor position
+			let menuX = rect.left + 30; // Default position
+
+			// If we're in the middle of text, calculate better X position
+			if (slashPosition > 0) {
+				// Create a hidden span to measure text width up to the slash position
+				const tempSpan = document.createElement('span');
+				tempSpan.style.visibility = 'hidden';
+				tempSpan.style.position = 'absolute';
+				tempSpan.style.fontSize = '0.95rem'; // Match textarea font size
+				tempSpan.style.fontFamily = 'inherit';
+				tempSpan.style.whiteSpace = 'pre';
+
+				// Get text before the slash
+				const textBeforeSlash = value.substring(0, slashPosition);
+				tempSpan.textContent = textBeforeSlash;
+
+				// Add to DOM, measure, then remove
+				document.body.appendChild(tempSpan);
+				const textWidth = tempSpan.getBoundingClientRect().width;
+				document.body.removeChild(tempSpan);
+
+				// Position menu at the slash, accounting for padding
+				menuX = rect.left + textWidth + 12;
+			}
 
 			// Create a new menu
 			const menu = document.createElement('div');
 			menu.id = 'direct-slash-menu';
 			menu.style.position = 'fixed';
 			menu.style.top = `${rect.bottom + 10}px`; // Position below the input line
-			menu.style.left = `${rect.left + 30}px`; // Position at approximate slash position
+			menu.style.left = `${menuX}px`; // Position at slash position
 			menu.style.width = '300px';
 			menu.style.backgroundColor = 'white';
 			menu.style.border = '2px solid #60a5fa';
@@ -344,14 +373,18 @@
 			}
 			removeDirectSlashMenu();
 		} else if (event.key === '/') {
-			// Direct keyboard handling of slash to show menu immediately
-			if (inputElement.selectionStart === 0 || value === '') {
-				// Allow the slash character to be added to the input
-				setTimeout(() => {
-					console.log('Slash key pressed, showing menu');
-					createDirectSlashMenu();
-				}, 10);
-			}
+			// Show menu whenever slash is typed (not just at beginning)
+			// Allow the slash character to be added to the input
+			setTimeout(() => {
+				if (inputElement) {
+					const cursorPos = inputElement.selectionStart || 0;
+					// Only show if slash is after a space or at beginning
+					if (cursorPos === 1 || (value && value[cursorPos - 2] === ' ')) {
+						console.log('Slash key pressed, showing menu');
+						createDirectSlashMenu(cursorPos - 1);
+					}
+				}
+			}, 10);
 		}
 	}
 
