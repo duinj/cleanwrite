@@ -2,6 +2,7 @@
 	import { rewriteText } from '$lib/services/gemini';
 	import { isLLMLoading, hasAPIKey, initializeAPIKeyState } from '$lib/stores/gemini';
 	import APIKeyModal from './APIKeyModal.svelte';
+	import { onMount } from 'svelte';
 
 	// Check if we're in a browser environment
 	const isBrowser = typeof window !== 'undefined';
@@ -28,6 +29,8 @@
 	let isRewriting = false;
 	let errorMessage = '';
 	let rewriteClickable = true;
+	let showSlashMenu = false;
+	let slashMenuPosition = { top: 0, left: 0 };
 
 	// Initialize API key state on component mount, but only in browser
 	$effect.root(() => {
@@ -77,12 +80,159 @@
 		}
 	}
 
+	// Watch for input changes - simplified
+	function handleInput() {
+		adjustHeight();
+		// Check for slash command only at beginning of input
+		if (value === '/') {
+			console.log('Slash detected in input, showing menu');
+			createDirectSlashMenu();
+		} else if (!value || !value.startsWith('/')) {
+			removeDirectSlashMenu();
+		}
+	}
+
+	// DOM-based direct slash menu implementation
+	function createDirectSlashMenu() {
+		// Remove any existing menu first
+		removeDirectSlashMenu();
+
+		// Get cursor position for menu placement
+		if (inputElement) {
+			// Calculate cursor position
+			const cursorPos = inputElement.selectionStart || 0;
+
+			// Create a range to get the position
+			const range = document.createRange();
+			const selection = window.getSelection();
+
+			// Get position of the input element
+			const rect = inputElement.getBoundingClientRect();
+
+			// Create a new menu
+			const menu = document.createElement('div');
+			menu.id = 'direct-slash-menu';
+			menu.style.position = 'fixed';
+			menu.style.top = `${rect.top - 5}px`; // Position above the input line
+			menu.style.left = `${rect.left + 30}px`; // Position at approximate slash position
+			menu.style.width = '300px';
+			menu.style.backgroundColor = 'white';
+			menu.style.border = '2px solid #60a5fa';
+			menu.style.borderRadius = '8px';
+			menu.style.padding = '12px';
+			menu.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.2)';
+			menu.style.zIndex = '99999';
+			menu.style.transform = 'translateY(-100%)'; // Move it above the cursor
+
+			// Header
+			const header = document.createElement('div');
+			header.textContent = 'Slash Commands';
+			header.style.fontSize = '16px';
+			header.style.fontWeight = 'bold';
+			header.style.marginBottom = '10px';
+			header.style.padding = '4px 8px';
+			header.style.color = '#374151';
+			menu.appendChild(header);
+
+			// Options - Length
+			const lengthOption = createMenuOption('Length', '(coming soon)', () => {
+				removeDirectSlashMenu();
+			});
+			menu.appendChild(lengthOption);
+
+			// Options - Tone
+			const toneOption = createMenuOption('Tone', '(coming soon)', () => {
+				removeDirectSlashMenu();
+			});
+			menu.appendChild(toneOption);
+
+			// Options - Rewrite
+			const rewriteOption = createMenuOption('Rewrite', '', () => {
+				removeDirectSlashMenu();
+				handleLLMRewrite();
+			});
+			menu.appendChild(rewriteOption);
+
+			// Overlay background - make it transparent to clicks except for the menu
+			const overlay = document.createElement('div');
+			overlay.id = 'direct-slash-menu-overlay';
+			overlay.style.position = 'fixed';
+			overlay.style.top = '0';
+			overlay.style.left = '0';
+			overlay.style.right = '0';
+			overlay.style.bottom = '0';
+			overlay.style.backgroundColor = 'transparent';
+			overlay.style.zIndex = '99998';
+
+			// Close menu when clicking outside
+			overlay.addEventListener('click', removeDirectSlashMenu);
+
+			// Add to document
+			document.body.appendChild(overlay);
+			document.body.appendChild(menu);
+		}
+	}
+
+	function createMenuOption(label: string, subtitle: string, onClick: () => void) {
+		const option = document.createElement('div');
+		option.style.padding = '8px 12px';
+		option.style.margin = '4px 0';
+		option.style.borderRadius = '4px';
+		option.style.cursor = 'pointer';
+		option.style.display = 'flex';
+		option.style.alignItems = 'center';
+
+		// Hover effect
+		option.addEventListener('mouseover', () => {
+			option.style.backgroundColor = '#f3f4f6';
+		});
+		option.addEventListener('mouseout', () => {
+			option.style.backgroundColor = 'transparent';
+		});
+
+		// Label
+		const labelEl = document.createElement('span');
+		labelEl.textContent = label;
+		labelEl.style.fontSize = '14px';
+		labelEl.style.fontWeight = '500';
+		option.appendChild(labelEl);
+
+		// Subtitle if provided
+		if (subtitle) {
+			const subtitleEl = document.createElement('span');
+			subtitleEl.textContent = subtitle;
+			subtitleEl.style.fontSize = '12px';
+			subtitleEl.style.color = '#6b7280';
+			subtitleEl.style.marginLeft = '8px';
+			option.appendChild(subtitleEl);
+		}
+
+		// Click handler
+		option.addEventListener('click', onClick);
+
+		return option;
+	}
+
+	function removeDirectSlashMenu() {
+		const menu = document.getElementById('direct-slash-menu');
+		const overlay = document.getElementById('direct-slash-menu-overlay');
+
+		if (menu) {
+			document.body.removeChild(menu);
+		}
+		if (overlay) {
+			document.body.removeChild(overlay);
+		}
+	}
+
+	// Handle key press for slash and escape to close
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
 			const submittedText = value;
 			onSubmit(submittedText);
 			value = ''; // Clear the input immediately
+			removeDirectSlashMenu();
 		} else if (event.key === 'ArrowUp') {
 			event.preventDefault();
 			onKeyNavigation('up');
@@ -103,20 +253,52 @@
 					inputElement.selectionEnd = inputElement.value.length;
 				}
 			}, 0);
-		} else if (event.key === 'Escape' && onEscape) {
+		} else if (event.key === 'Escape') {
 			event.preventDefault();
-			onEscape();
-			// Ensure focus is lost after escape and update focused state immediately
-			if (inputElement) {
-				inputElement.blur();
-				isFocused = false;
+			removeDirectSlashMenu();
+			if (onEscape) {
+				onEscape();
+				// Ensure focus is lost after escape and update focused state immediately
+				if (inputElement) {
+					inputElement.blur();
+					isFocused = false;
+				}
 			}
 		} else if (event.key === 'Tab' && !event.shiftKey) {
 			event.preventDefault();
 			if (value && value.trim() !== '' && !isRewriting && rewriteClickable) {
 				handleLLMRewrite();
 			}
+			removeDirectSlashMenu();
+		} else if (event.key === '/') {
+			// Direct keyboard handling of slash to show menu immediately
+			if (inputElement.selectionStart === 0 || value === '') {
+				// Allow the slash character to be added to the input
+				setTimeout(() => {
+					console.log('Slash key pressed, showing menu');
+					createDirectSlashMenu();
+				}, 10);
+			}
 		}
+	}
+
+	// Cleanup on component unmount
+	onMount(() => {
+		return () => {
+			removeDirectSlashMenu();
+		};
+	});
+
+	// Auto-resize the textarea
+	function adjustHeight() {
+		if (!inputElement) return;
+
+		// Reset height first to calculate the proper scrollHeight
+		inputElement.style.height = 'auto';
+
+		// Set a minimum height and cap the maximum height
+		const newHeight = Math.max(38, Math.min(inputElement.scrollHeight, 200));
+		inputElement.style.height = `${newHeight}px`;
 	}
 
 	// Handle 'f' key globally
@@ -134,26 +316,6 @@
 			}
 		}
 	}
-
-	// Auto-resize the textarea
-	function adjustHeight() {
-		if (!inputElement) return;
-
-		// Reset height first to calculate the proper scrollHeight
-		inputElement.style.height = 'auto';
-
-		// Set a minimum height and cap the maximum height
-		const newHeight = Math.max(38, Math.min(inputElement.scrollHeight, 200));
-		inputElement.style.height = `${newHeight}px`;
-	}
-
-	// Watch for value changes to update height
-	$effect(() => {
-		if (value !== undefined) {
-			// Use a small timeout to ensure the DOM has updated
-			setTimeout(adjustHeight, 0);
-		}
-	});
 
 	// Focus the input on mount and set up window focus/blur detection
 	$effect.root(() => {
@@ -206,11 +368,19 @@
 			}
 		}, 10);
 	}
+
+	function handleSlashCommand(command: string) {
+		showSlashMenu = false;
+		if (command === 'rewrite') {
+			handleLLMRewrite();
+		}
+		// Length and tone commands don't do anything yet
+	}
 </script>
 
 <div class="relative">
 	<div
-		class="writing-bar shadow-floating mx-auto flex w-[56%] max-w-2xl items-center rounded-full bg-white px-6 py-0.5"
+		class="writing-bar shadow-floating relative mx-auto flex w-[56%] max-w-2xl items-center rounded-full bg-white px-6 py-0.5"
 		class:border-primary-subtle={isEditing}
 		class:disabled={isRewriting}
 	>
@@ -218,7 +388,7 @@
 			bind:this={inputElement}
 			bind:value
 			on:keydown={handleKeyDown}
-			on:input={adjustHeight}
+			on:input={handleInput}
 			on:focus={handleFocus}
 			on:blur={handleBlur}
 			placeholder={isEditing ? 'Edit entry...' : 'Write something...'}
@@ -369,5 +539,23 @@
 			opacity: 0.7;
 			transform: scale(1);
 		}
+	}
+
+	.slash-menu {
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+		background-color: white;
+		pointer-events: auto;
+	}
+
+	.slash-menu-wrapper {
+		pointer-events: auto;
+	}
+
+	.slash-menu-options button {
+		transition: all 0.15s ease;
+	}
+
+	.slash-menu-options button:hover {
+		background-color: #f3f4f6;
 	}
 </style>
