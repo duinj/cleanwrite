@@ -31,6 +31,11 @@
 	let rewriteClickable = true;
 	let showSlashMenu = false;
 	let slashMenuPosition = { top: 0, left: 0 };
+	// Track the currently selected menu item
+	let selectedMenuIndex = 0;
+	// Store menu element reference
+	let slashMenuElement: HTMLElement | null = null;
+	let slashMenuOptions: HTMLElement[] = [];
 
 	// Initialize API key state on component mount, but only in browser
 	$effect.root(() => {
@@ -87,6 +92,10 @@
 		if (value === '/') {
 			console.log('Slash detected in input, showing menu');
 			createDirectSlashMenu();
+			selectedMenuIndex = 0;
+		} else if (value && value.startsWith('/') && value.length > 1) {
+			// User is typing after slash, close the menu
+			removeDirectSlashMenu();
 		} else if (!value || !value.startsWith('/')) {
 			removeDirectSlashMenu();
 		}
@@ -102,10 +111,6 @@
 			// Calculate cursor position
 			const cursorPos = inputElement.selectionStart || 0;
 
-			// Create a range to get the position
-			const range = document.createRange();
-			const selection = window.getSelection();
-
 			// Get position of the input element
 			const rect = inputElement.getBoundingClientRect();
 
@@ -113,7 +118,7 @@
 			const menu = document.createElement('div');
 			menu.id = 'direct-slash-menu';
 			menu.style.position = 'fixed';
-			menu.style.top = `${rect.top - 5}px`; // Position above the input line
+			menu.style.top = `${rect.bottom + 10}px`; // Position below the input line
 			menu.style.left = `${rect.left + 30}px`; // Position at approximate slash position
 			menu.style.width = '300px';
 			menu.style.backgroundColor = 'white';
@@ -122,7 +127,10 @@
 			menu.style.padding = '12px';
 			menu.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.2)';
 			menu.style.zIndex = '99999';
-			menu.style.transform = 'translateY(-100%)'; // Move it above the cursor
+
+			// Store the menu element reference
+			slashMenuElement = menu;
+			slashMenuOptions = [];
 
 			// Header
 			const header = document.createElement('div');
@@ -135,23 +143,44 @@
 			menu.appendChild(header);
 
 			// Options - Length
-			const lengthOption = createMenuOption('Length', '(coming soon)', () => {
-				removeDirectSlashMenu();
-			});
+			const lengthOption = createMenuOption(
+				'Length',
+				'(coming soon)',
+				() => {
+					removeDirectSlashMenu();
+				},
+				0
+			);
 			menu.appendChild(lengthOption);
+			slashMenuOptions.push(lengthOption);
 
 			// Options - Tone
-			const toneOption = createMenuOption('Tone', '(coming soon)', () => {
-				removeDirectSlashMenu();
-			});
+			const toneOption = createMenuOption(
+				'Tone',
+				'(coming soon)',
+				() => {
+					removeDirectSlashMenu();
+				},
+				1
+			);
 			menu.appendChild(toneOption);
+			slashMenuOptions.push(toneOption);
 
 			// Options - Rewrite
-			const rewriteOption = createMenuOption('Rewrite', '', () => {
-				removeDirectSlashMenu();
-				handleLLMRewrite();
-			});
+			const rewriteOption = createMenuOption(
+				'Rewrite',
+				'',
+				() => {
+					removeDirectSlashMenu();
+					handleLLMRewrite();
+				},
+				2
+			);
 			menu.appendChild(rewriteOption);
+			slashMenuOptions.push(rewriteOption);
+
+			// Set initial selection
+			updateSelectedMenuItem();
 
 			// Overlay background - make it transparent to clicks except for the menu
 			const overlay = document.createElement('div');
@@ -173,7 +202,7 @@
 		}
 	}
 
-	function createMenuOption(label: string, subtitle: string, onClick: () => void) {
+	function createMenuOption(label: string, subtitle: string, onClick: () => void, index: number) {
 		const option = document.createElement('div');
 		option.style.padding = '8px 12px';
 		option.style.margin = '4px 0';
@@ -181,13 +210,12 @@
 		option.style.cursor = 'pointer';
 		option.style.display = 'flex';
 		option.style.alignItems = 'center';
+		option.setAttribute('data-index', index.toString());
 
 		// Hover effect
 		option.addEventListener('mouseover', () => {
-			option.style.backgroundColor = '#f3f4f6';
-		});
-		option.addEventListener('mouseout', () => {
-			option.style.backgroundColor = 'transparent';
+			selectedMenuIndex = index;
+			updateSelectedMenuItem();
 		});
 
 		// Label
@@ -213,6 +241,25 @@
 		return option;
 	}
 
+	function updateSelectedMenuItem() {
+		if (slashMenuOptions) {
+			slashMenuOptions.forEach((option, index) => {
+				if (index === selectedMenuIndex) {
+					option.style.backgroundColor = '#f3f4f6';
+				} else {
+					option.style.backgroundColor = 'transparent';
+				}
+			});
+		}
+	}
+
+	function selectCurrentMenuItem() {
+		if (slashMenuOptions && slashMenuOptions[selectedMenuIndex]) {
+			// Trigger the click handler of the selected item
+			slashMenuOptions[selectedMenuIndex].click();
+		}
+	}
+
 	function removeDirectSlashMenu() {
 		const menu = document.getElementById('direct-slash-menu');
 		const overlay = document.getElementById('direct-slash-menu-overlay');
@@ -223,17 +270,35 @@
 		if (overlay) {
 			document.body.removeChild(overlay);
 		}
+
+		slashMenuElement = null;
+		slashMenuOptions = [];
 	}
 
 	// Handle key press for slash and escape to close
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
+
+			// If slash menu is open, select the current menu item
+			if (slashMenuElement) {
+				selectCurrentMenuItem();
+				return;
+			}
+
 			const submittedText = value;
 			onSubmit(submittedText);
 			value = ''; // Clear the input immediately
 			removeDirectSlashMenu();
 		} else if (event.key === 'ArrowUp') {
+			// If slash menu is open, navigate up in the menu
+			if (slashMenuElement) {
+				event.preventDefault();
+				selectedMenuIndex = Math.max(0, selectedMenuIndex - 1);
+				updateSelectedMenuItem();
+				return;
+			}
+
 			event.preventDefault();
 			onKeyNavigation('up');
 			// Set cursor to end of text after pressing up
@@ -244,6 +309,14 @@
 				}
 			}, 0);
 		} else if (event.key === 'ArrowDown') {
+			// If slash menu is open, navigate down in the menu
+			if (slashMenuElement) {
+				event.preventDefault();
+				selectedMenuIndex = Math.min(slashMenuOptions.length - 1, selectedMenuIndex + 1);
+				updateSelectedMenuItem();
+				return;
+			}
+
 			event.preventDefault();
 			onKeyNavigation('down');
 			// Set cursor to end of text after pressing down
