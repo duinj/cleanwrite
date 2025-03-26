@@ -66,8 +66,27 @@
 			isLLMLoading.set(true);
 			errorMessage = '';
 
-			const rewrittenText = await rewriteText(value);
-			value = rewrittenText;
+			// Remove the slash character if triggered from slash command
+			let textToRewrite = value;
+			if (textToRewrite.includes('/')) {
+				// Find the slash that's either at the beginning or after a space
+				const slashIndex = textToRewrite
+					.split('')
+					.findIndex(
+						(char: string, i: number) => char === '/' && (i === 0 || textToRewrite[i - 1] === ' ')
+					);
+
+				if (slashIndex >= 0) {
+					// Remove the slash character
+					textToRewrite =
+						textToRewrite.substring(0, slashIndex) + textToRewrite.substring(slashIndex + 1);
+				}
+			}
+
+			const rewrittenText = await rewriteText(textToRewrite);
+
+			// Ensure the rewritten text doesn't have quotes around it
+			value = rewrittenText.replace(/^["'](.*)["']$/, '$1');
 
 			// Make sure textarea updates its height
 			setTimeout(adjustHeight, 10);
