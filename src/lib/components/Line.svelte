@@ -32,60 +32,52 @@
 	// Initialize API key state on component mount, but only in browser
 	$effect.root(() => {
 		if (isBrowser) {
-			console.log('Initializing API key state');
 			initializeAPIKeyState();
 		}
 	});
 
 	function handleRewriteClick() {
-		console.log('Rewrite button clicked');
 		if (rewriteClickable && value && value.trim() !== '') {
 			handleLLMRewrite();
 		}
 	}
 
 	async function handleLLMRewrite() {
-		console.log('handleLLMRewrite called with value:', value);
 		if (!value || value.trim() === '') {
-			console.log('Empty text, not rewriting');
 			return;
 		}
 
 		if (!$hasAPIKey) {
-			console.log('No API key found, showing modal');
 			showAPIKeyModal = true;
 			return;
 		}
 
 		try {
-			console.log('Starting rewrite process');
 			isRewriting = true;
 			rewriteClickable = false;
 			isLLMLoading.set(true);
 			errorMessage = '';
 
 			const rewrittenText = await rewriteText(value);
-			console.log('Got rewritten text:', rewrittenText);
 			value = rewrittenText;
 
 			// Make sure textarea updates its height
-			setTimeout(adjustHeight, 0);
+			setTimeout(adjustHeight, 10);
 		} catch (error) {
-			console.error('Error rewriting text:', error);
 			errorMessage = error instanceof Error ? error.message : 'Failed to rewrite text';
 		} finally {
-			console.log('Rewrite process finished');
 			isRewriting = false;
 			isLLMLoading.set(false);
 			// Allow clicking again after a short delay
 			setTimeout(() => {
 				rewriteClickable = true;
+				// Adjust height again to be safe
+				adjustHeight();
 			}, 500);
 		}
 	}
 
 	function handleKeyDown(event: KeyboardEvent) {
-		console.log('Key pressed:', event.key);
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
 			const submittedText = value;
@@ -120,17 +112,9 @@
 				isFocused = false;
 			}
 		} else if (event.key === 'Tab' && !event.shiftKey) {
-			console.log('Tab key pressed');
 			event.preventDefault();
 			if (value && value.trim() !== '' && !isRewriting && rewriteClickable) {
-				console.log('Tab key will trigger rewrite');
 				handleLLMRewrite();
-			} else {
-				console.log('Tab key conditions not met:', {
-					hasValue: Boolean(value && value.trim() !== ''),
-					notRewriting: !isRewriting,
-					isClickable: rewriteClickable
-				});
 			}
 		}
 	}
@@ -153,14 +137,22 @@
 
 	// Auto-resize the textarea
 	function adjustHeight() {
-		if (inputElement) {
-			inputElement.style.height = 'auto';
-			inputElement.style.height = `${Math.min(inputElement.scrollHeight, 200)}px`;
-		}
+		if (!inputElement) return;
+
+		// Reset height first to calculate the proper scrollHeight
+		inputElement.style.height = 'auto';
+
+		// Set a minimum height and cap the maximum height
+		const newHeight = Math.max(38, Math.min(inputElement.scrollHeight, 200));
+		inputElement.style.height = `${newHeight}px`;
 	}
 
+	// Watch for value changes to update height
 	$effect(() => {
-		adjustHeight();
+		if (value !== undefined) {
+			// Use a small timeout to ensure the DOM has updated
+			setTimeout(adjustHeight, 0);
+		}
 	});
 
 	// Focus the input on mount and set up window focus/blur detection

@@ -37,12 +37,8 @@ function getGeminiModel() {
  * @returns The rewritten text
  */
 export async function rewriteText(text: string): Promise<string> {
-	console.log('Rewrite text called with:', text);
-
 	try {
 		const model = getGeminiModel();
-
-		console.log('Using Gemini 2.0 Flash model to rewrite text');
 
 		const prompt = `Please rewrite the following text to be more clear and concise. Just return the improved text without any explanations or additional comments:
 		
@@ -51,10 +47,8 @@ export async function rewriteText(text: string): Promise<string> {
 		// Generate content with the model
 		const result = await model.generateContent(prompt);
 		const response = await result.response;
-		const rewrittenText = response.text();
-
-		console.log('Rewritten text received:', rewrittenText);
-		return rewrittenText;
+		// Trim the response to remove unwanted whitespace including newlines
+		return response.text().trim();
 	} catch (error) {
 		console.error('Error in rewriteText:', error);
 		throw error;
