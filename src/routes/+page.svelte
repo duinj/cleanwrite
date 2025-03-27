@@ -3,6 +3,7 @@
 	import History from '$lib/components/History.svelte';
 	import Line from '$lib/components/Line.svelte';
 	import type { HistoryItem } from '$lib/types';
+	import { addToContext, setHistoryAsContext } from '$lib/stores/context';
 
 	let historyItems: HistoryItem[] = [];
 	let currentText = '';
@@ -15,6 +16,8 @@
 		if (isEditing && focusedIndex !== null) {
 			console.log('Updating item at index:', focusedIndex, 'with text:', text);
 			historyItems = historyItems.map((item, i) => (i === focusedIndex ? { ...item, text } : item));
+			// After editing, update the context with all items
+			setHistoryAsContext(historyItems);
 			resetState();
 		} else {
 			const newItem: HistoryItem = {
@@ -32,6 +35,10 @@
 				'History after add:',
 				historyItems.map((item) => ({ id: item.id, text: item.text }))
 			);
+
+			// Add to context
+			addToContext(text);
+
 			resetState();
 		}
 	}
@@ -101,6 +108,11 @@
 
 	onMount(() => {
 		document.title = 'CleanWrite';
+
+		// Initialize context with any existing history items when the app loads
+		if (historyItems.length > 0) {
+			setHistoryAsContext(historyItems);
+		}
 	});
 </script>
 

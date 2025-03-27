@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { rewriteText } from '$lib/services/gemini';
 	import { isLLMLoading, hasAPIKey, initializeAPIKeyState } from '$lib/stores/gemini';
+	import { clearContext } from '$lib/stores/context';
 	import APIKeyModal from './APIKeyModal.svelte';
 	import { onMount } from 'svelte';
 
@@ -190,30 +191,6 @@
 			header.style.color = '#374151';
 			menu.appendChild(header);
 
-			// Options - Length
-			const lengthOption = createMenuOption(
-				'Length',
-				'(coming soon)',
-				() => {
-					removeDirectSlashMenu();
-				},
-				0
-			);
-			menu.appendChild(lengthOption);
-			slashMenuOptions.push(lengthOption);
-
-			// Options - Tone
-			const toneOption = createMenuOption(
-				'Tone',
-				'(coming soon)',
-				() => {
-					removeDirectSlashMenu();
-				},
-				1
-			);
-			menu.appendChild(toneOption);
-			slashMenuOptions.push(toneOption);
-
 			// Options - Rewrite
 			const rewriteOption = createMenuOption(
 				'Rewrite',
@@ -226,6 +203,19 @@
 			);
 			menu.appendChild(rewriteOption);
 			slashMenuOptions.push(rewriteOption);
+
+			// Options - Clear Context
+			const clearContextOption = createMenuOption(
+				'Clear Context',
+				'Clear writing history',
+				() => {
+					removeDirectSlashMenu();
+					clearContext();
+				},
+				3
+			);
+			menu.appendChild(clearContextOption);
+			slashMenuOptions.push(clearContextOption);
 
 			// Set initial selection
 			updateSelectedMenuItem();

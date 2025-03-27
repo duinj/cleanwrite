@@ -1,5 +1,6 @@
 // Gemini AI service using the official Google Generative AI SDK
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getContextString, hasContext } from '$lib/stores/context';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -40,9 +41,28 @@ export async function rewriteText(text: string): Promise<string> {
 	try {
 		const model = getGeminiModel();
 
-		const prompt = `Please rewrite the following text to be more clear and concise. Just return the improved text without any explanations or additional comments:
+		// Check if we have context to use
+		const hasWritingContext = hasContext();
+		const contextString = getContextString();
+
+		let prompt = '';
+
+		if (hasWritingContext && contextString) {
+			// If we have context, use it to inform the rewrite
+			prompt = `You are assisting with writing content. Here is the previous content that provides context:
+
+${contextString}
+
+Please rewrite the following text to be more clear, concise, and consistent with the previous content.
+Just return the improved text without any explanations or additional comments:
+
+"${text}"`;
+		} else {
+			// Default prompt without context
+			prompt = `Please rewrite the following text to be more clear and concise. Just return the improved text without any explanations or additional comments:
 		
 "${text}"`;
+		}
 
 		// Generate content with the model
 		const result = await model.generateContent(prompt);
