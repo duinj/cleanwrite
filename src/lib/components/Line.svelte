@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { rewriteText } from '$lib/services/gemini';
 	import { isLLMLoading, hasAPIKey, initializeAPIKeyState } from '$lib/stores/gemini';
-	import { clearContext } from '$lib/stores/context';
+	import { clearContext, getCurrentTone, setTone } from '$lib/stores/context';
 	import APIKeyModal from './APIKeyModal.svelte';
 	import { onMount } from 'svelte';
 
@@ -37,11 +37,29 @@
 	// Store menu element reference
 	let slashMenuElement: HTMLElement | null = null;
 	let slashMenuOptions: HTMLElement[] = [];
+	let toneSubmenuVisible = false;
+	let currentSelectedTone: string | null = null;
+
+	// Available tones for writing
+	const availableTones = [
+		'professional',
+		'casual',
+		'friendly',
+		'formal',
+		'technical',
+		'enthusiastic',
+		'confident',
+		'persuasive',
+		'humorous',
+		'empathetic'
+	];
 
 	// Initialize API key state on component mount, but only in browser
 	$effect.root(() => {
 		if (isBrowser) {
 			initializeAPIKeyState();
+			// Get the current tone
+			currentSelectedTone = getCurrentTone();
 		}
 	});
 
@@ -191,6 +209,19 @@
 			header.style.color = '#374151';
 			menu.appendChild(header);
 
+			// Options - Tone
+			const toneOption = createMenuOption(
+				'Tone',
+				`${currentSelectedTone ? `Current: ${currentSelectedTone}` : 'Set writing tone'}`,
+				() => {
+					// Instead of closing, show tone submenu
+					showToneSubmenu(menu);
+				},
+				0
+			);
+			menu.appendChild(toneOption);
+			slashMenuOptions.push(toneOption);
+
 			// Options - Rewrite
 			const rewriteOption = createMenuOption(
 				'Rewrite',
@@ -199,7 +230,7 @@
 					removeDirectSlashMenu();
 					handleLLMRewrite();
 				},
-				2
+				1
 			);
 			menu.appendChild(rewriteOption);
 			slashMenuOptions.push(rewriteOption);
@@ -212,7 +243,7 @@
 					removeDirectSlashMenu();
 					clearContext();
 				},
-				3
+				2
 			);
 			menu.appendChild(clearContextOption);
 			slashMenuOptions.push(clearContextOption);
@@ -321,6 +352,24 @@
 			// If slash menu is open, select the current menu item
 			if (slashMenuElement) {
 				selectCurrentMenuItem();
+				return;
+			}
+
+			// Check if the input starts with a tone command
+			if (value.trim().startsWith('/tone ')) {
+				const toneName = value.trim().substring(6).trim();
+				if (availableTones.includes(toneName.toLowerCase())) {
+					setTone(toneName.toLowerCase());
+					currentSelectedTone = toneName.toLowerCase();
+					value = ''; // Clear input after setting tone
+				} else {
+					// Show error that tone is not recognized
+					errorMessage = `Tone "${toneName}" not recognized. Try one of: ${availableTones.join(', ')}`;
+					// Clear error after 3 seconds
+					setTimeout(() => {
+						errorMessage = '';
+					}, 3000);
+				}
 				return;
 			}
 
@@ -484,12 +533,103 @@
 		}, 10);
 	}
 
+	function showToneSubmenu(parentMenu: HTMLElement): void {
+		// Clear any existing submenu
+		const existingSubmenu = document.getElementById('tone-submenu');
+		if (existingSubmenu) {
+			existingSubmenu.remove();
+		}
+
+		// Create submenu container
+		const submenu = document.createElement('div');
+		submenu.id = 'tone-submenu';
+		submenu.style.backgroundColor = 'white';
+		submenu.style.padding = '12px';
+		submenu.style.marginTop = '8px';
+		submenu.style.borderTop = '1px solid #e5e7eb';
+		submenu.style.maxHeight = '300px';
+		submenu.style.overflowY = 'auto';
+
+		// Header
+		const header = document.createElement('div');
+		header.textContent = 'Select Writing Tone';
+		header.style.fontSize = '14px';
+		header.style.fontWeight = 'bold';
+		header.style.marginBottom = '10px';
+		header.style.color = '#4b5563';
+		submenu.appendChild(header);
+
+		// Create grid of tone options
+		const toneGrid = document.createElement('div');
+		toneGrid.style.display = 'grid';
+		toneGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+		toneGrid.style.gap = '8px';
+
+		// Add all available tones
+		availableTones.forEach((tone, index) => {
+			const toneButton = document.createElement('button');
+			toneButton.textContent = tone;
+			toneButton.style.padding = '8px 12px';
+			toneButton.style.border = '1px solid #e5e7eb';
+			toneButton.style.borderRadius = '4px';
+			toneButton.style.background = 'white';
+			toneButton.style.fontSize = '13px';
+			toneButton.style.cursor = 'pointer';
+			toneButton.style.textTransform = 'capitalize';
+
+			// Highlight if this is the current tone
+			if (tone === currentSelectedTone) {
+				toneButton.style.backgroundColor = '#eff6ff';
+				toneButton.style.borderColor = '#60a5fa';
+				toneButton.style.fontWeight = 'bold';
+			}
+
+			// Add hover effect
+			toneButton.addEventListener('mouseover', () => {
+				if (tone !== currentSelectedTone) {
+					toneButton.style.backgroundColor = '#f9fafb';
+				}
+			});
+
+			toneButton.addEventListener('mouseout', () => {
+				if (tone !== currentSelectedTone) {
+					toneButton.style.backgroundColor = 'white';
+				}
+			});
+
+			// Handle click to select the tone
+			toneButton.addEventListener('click', () => {
+				setTone(tone);
+				currentSelectedTone = tone;
+				removeDirectSlashMenu();
+
+				// Update the text in the input to reflect the selected tone
+				if (value.includes('/tone') && inputElement) {
+					value = value.replace(/\/tone.*/, '').trim();
+				}
+			});
+
+			toneGrid.appendChild(toneButton);
+		});
+
+		submenu.appendChild(toneGrid);
+		parentMenu.appendChild(submenu);
+
+		// Update the state
+		toneSubmenuVisible = true;
+	}
+
 	function handleSlashCommand(command: string) {
 		showSlashMenu = false;
 		if (command === 'rewrite') {
 			handleLLMRewrite();
+		} else if (command === 'tone') {
+			// Show tone selection UI
+			createDirectSlashMenu();
+			if (slashMenuElement) {
+				showToneSubmenu(slashMenuElement);
+			}
 		}
-		// Length and tone commands don't do anything yet
 	}
 </script>
 
@@ -499,6 +639,13 @@
 		class:border-primary-subtle={isEditing}
 		class:disabled={isRewriting}
 	>
+		{#if currentSelectedTone}
+			<div
+				class="absolute -top-7 right-4 rounded-t-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600"
+			>
+				Tone: {currentSelectedTone}
+			</div>
+		{/if}
 		<textarea
 			bind:this={inputElement}
 			bind:value

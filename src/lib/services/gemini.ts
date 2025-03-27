@@ -1,6 +1,6 @@
 // Gemini AI service using the official Google Generative AI SDK
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getContextString, hasContext } from '$lib/stores/context';
+import { getContextString, hasContext, getCurrentTone } from '$lib/stores/context';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -44,8 +44,12 @@ export async function rewriteText(text: string): Promise<string> {
 		// Check if we have context to use
 		const hasWritingContext = hasContext();
 		const contextString = getContextString();
+		const currentTone = getCurrentTone();
 
 		let prompt = '';
+
+		// Build the tone instruction
+		const toneInstruction = currentTone ? `Use a ${currentTone} tone in your writing.` : '';
 
 		if (hasWritingContext && contextString) {
 			// If we have context, use it to inform the rewrite
@@ -54,12 +58,15 @@ export async function rewriteText(text: string): Promise<string> {
 ${contextString}
 
 Please rewrite the following text to be more clear, concise, and consistent with the previous content.
+${toneInstruction}
 Just return the improved text without any explanations or additional comments:
 
 "${text}"`;
 		} else {
 			// Default prompt without context
-			prompt = `Please rewrite the following text to be more clear and concise. Just return the improved text without any explanations or additional comments:
+			prompt = `Please rewrite the following text to be more clear and concise. 
+${toneInstruction}
+Just return the improved text without any explanations or additional comments:
 		
 "${text}"`;
 		}
