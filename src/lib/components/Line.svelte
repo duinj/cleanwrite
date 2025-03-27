@@ -730,13 +730,6 @@
 		class:border-primary-subtle={isEditing}
 		class:disabled={isRewriting}
 	>
-		{#if currentSelectedTone}
-			<div
-				class="absolute -top-7 right-4 rounded-t-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600"
-			>
-				Tone: {currentSelectedTone}
-			</div>
-		{/if}
 		<textarea
 			bind:this={inputElement}
 			bind:value
