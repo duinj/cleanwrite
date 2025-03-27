@@ -41,6 +41,7 @@
 	let currentSelectedTone: string | null = null;
 	let selectedToneIndex = 0;
 	let toneSubmenuOptions: HTMLElement[] = [];
+	let slashInput = '';
 
 	// Available tones for writing
 	const availableTones = [
@@ -54,6 +55,16 @@
 		'persuasive',
 		'humorous',
 		'empathetic'
+	];
+
+	// Available slash commands
+	const slashCommands = [
+		{
+			name: 'tone',
+			description: `${currentSelectedTone ? `Current: ${currentSelectedTone}` : 'Set writing tone'}`
+		},
+		{ name: 'rewrite', description: '' },
+		{ name: 'clear', description: 'Clear writing history' }
 	];
 
 	// Initialize API key state on component mount, but only in browser
@@ -140,11 +151,77 @@
 			(cursorPos === 1 || value[cursorPos - 2] === ' ')
 		) {
 			console.log('Slash detected in input, showing menu');
+			slashInput = ''; // Reset slash input when first showing menu
 			createDirectSlashMenu(cursorPos - 1);
 			selectedMenuIndex = 0;
+		} else if (slashMenuElement && value) {
+			// Update the menu based on what is typed after the slash
+			const slashPos = value.lastIndexOf('/');
+			if (slashPos !== -1 && cursorPos > slashPos) {
+				// Extract what was typed after the slash
+				slashInput = value.substring(slashPos + 1, cursorPos).toLowerCase();
+				// Rebuild the menu with filtered commands
+				updateSlashMenuCommands();
+			} else {
+				// If cursor is before the slash, close the menu
+				removeDirectSlashMenu();
+			}
 		} else {
 			removeDirectSlashMenu();
 		}
+	}
+
+	// Update slash menu based on what has been typed
+	function updateSlashMenuCommands() {
+		if (!slashMenuElement) return;
+
+		// Remove all existing options
+		while (slashMenuElement.children.length > 1) {
+			// Keep the header
+			slashMenuElement.removeChild(slashMenuElement.lastChild as Node);
+		}
+		slashMenuOptions = [];
+
+		// Filter commands based on input
+		const filteredCommands = slashCommands.filter((cmd) =>
+			cmd.name.toLowerCase().startsWith(slashInput)
+		);
+
+		// If no matches, remove menu
+		if (filteredCommands.length === 0) {
+			removeDirectSlashMenu();
+			return;
+		}
+
+		// Reset selected index if needed
+		if (selectedMenuIndex >= filteredCommands.length) {
+			selectedMenuIndex = 0;
+		}
+
+		// Add filtered commands to menu
+		filteredCommands.forEach((cmd, index) => {
+			let onClick;
+			if (cmd.name === 'tone') {
+				onClick = () => showToneSubmenu(slashMenuElement!);
+			} else if (cmd.name === 'rewrite') {
+				onClick = () => {
+					removeDirectSlashMenu();
+					handleLLMRewrite();
+				};
+			} else if (cmd.name === 'clear') {
+				onClick = () => {
+					removeDirectSlashMenu();
+					clearContext();
+				};
+			}
+
+			const option = createMenuOption(cmd.name, cmd.description, onClick!, index);
+			slashMenuElement!.appendChild(option);
+			slashMenuOptions.push(option);
+		});
+
+		// Update visual selection
+		updateSelectedMenuItem();
 	}
 
 	// DOM-based direct slash menu implementation
@@ -211,47 +288,8 @@
 			header.style.color = '#374151';
 			menu.appendChild(header);
 
-			// Options - Tone
-			const toneOption = createMenuOption(
-				'Tone',
-				`${currentSelectedTone ? `Current: ${currentSelectedTone}` : 'Set writing tone'}`,
-				() => {
-					// Instead of closing, show tone submenu
-					showToneSubmenu(menu);
-				},
-				0
-			);
-			menu.appendChild(toneOption);
-			slashMenuOptions.push(toneOption);
-
-			// Options - Rewrite
-			const rewriteOption = createMenuOption(
-				'Rewrite',
-				'',
-				() => {
-					removeDirectSlashMenu();
-					handleLLMRewrite();
-				},
-				1
-			);
-			menu.appendChild(rewriteOption);
-			slashMenuOptions.push(rewriteOption);
-
-			// Options - Clear Context
-			const clearContextOption = createMenuOption(
-				'Clear Context',
-				'Clear writing history',
-				() => {
-					removeDirectSlashMenu();
-					clearContext();
-				},
-				2
-			);
-			menu.appendChild(clearContextOption);
-			slashMenuOptions.push(clearContextOption);
-
-			// Set initial selection
-			updateSelectedMenuItem();
+			// Initialize with all commands
+			updateSlashMenuCommands();
 
 			// Overlay background - make it transparent to clicks except for the menu
 			const overlay = document.createElement('div');
@@ -361,33 +399,66 @@
 
 			// If slash menu is open, handle the selection
 			if (slashMenuElement) {
-				// If tone is selected, show the tone submenu
-				if (selectedMenuIndex === 0) {
-					// Tone is the first option (index 0)
-					showToneSubmenu(slashMenuElement);
-					return;
+				// If there's a filtered result
+				if (slashMenuOptions.length > 0) {
+					// Get the command name from the selected option
+					const selectedCommand = slashMenuOptions[selectedMenuIndex]
+						.querySelector('span')
+						?.textContent?.toLowerCase();
+
+					// Handle each command
+					if (selectedCommand === 'tone') {
+						showToneSubmenu(slashMenuElement);
+						return;
+					} else if (selectedCommand === 'rewrite') {
+						removeDirectSlashMenu();
+						handleLLMRewrite();
+						return;
+					} else if (selectedCommand === 'clear') {
+						removeDirectSlashMenu();
+						clearContext();
+						return;
+					}
 				}
 
-				// Otherwise, select the current menu item
-				selectCurrentMenuItem();
+				// If no match, just remove the menu
+				removeDirectSlashMenu();
 				return;
 			}
 
-			// Check if the input starts with a tone command
-			if (value.trim().startsWith('/tone ')) {
-				const toneName = value.trim().substring(6).trim();
-				if (availableTones.includes(toneName.toLowerCase())) {
-					setTone(toneName.toLowerCase());
-					currentSelectedTone = toneName.toLowerCase();
-					value = ''; // Clear input after setting tone
+			// Check if the input starts with specific commands
+			const input = value.trim();
+			// Process tone command
+			if (input.startsWith('/t ') || input === '/t') {
+				const tonePart = input.substring(3).trim();
+				if (tonePart) {
+					// If there's text after /t, use it as tone
+					handleToneCommand(tonePart);
 				} else {
-					// Show error that tone is not recognized
-					errorMessage = `Tone "${toneName}" not recognized. Try one of: ${availableTones.join(', ')}`;
-					// Clear error after 3 seconds
-					setTimeout(() => {
-						errorMessage = '';
-					}, 3000);
+					// Just /t, show the tone menu
+					createDirectSlashMenu();
+					if (slashMenuElement) {
+						showToneSubmenu(slashMenuElement);
+					}
 				}
+				return;
+			}
+			// Process rewrite command
+			else if (input.startsWith('/r') && (input === '/r' || input.startsWith('/r '))) {
+				handleLLMRewrite();
+				value = ''; // Clear input
+				return;
+			}
+			// Process clear command
+			else if (input.startsWith('/c') && (input === '/c' || input.startsWith('/c '))) {
+				clearContext();
+				value = ''; // Clear input
+				return;
+			}
+			// Legacy tone command handling
+			else if (input.startsWith('/tone ')) {
+				const toneName = input.substring(6).trim();
+				handleToneCommand(toneName);
 				return;
 			}
 
@@ -710,6 +781,21 @@
 		}
 	}
 
+	function handleToneCommand(toneName: string) {
+		if (availableTones.includes(toneName.toLowerCase())) {
+			setTone(toneName.toLowerCase());
+			currentSelectedTone = toneName.toLowerCase();
+			value = ''; // Clear input after setting tone
+		} else {
+			// Show error that tone is not recognized
+			errorMessage = `Tone "${toneName}" not recognized. Try one of: ${availableTones.join(', ')}`;
+			// Clear error after 3 seconds
+			setTimeout(() => {
+				errorMessage = '';
+			}, 3000);
+		}
+	}
+
 	function handleSlashCommand(command: string) {
 		showSlashMenu = false;
 		if (command === 'rewrite') {
@@ -720,6 +806,8 @@
 			if (slashMenuElement) {
 				showToneSubmenu(slashMenuElement);
 			}
+		} else if (command === 'clear') {
+			clearContext();
 		}
 	}
 </script>
