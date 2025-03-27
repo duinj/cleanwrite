@@ -39,6 +39,8 @@
 	let slashMenuOptions: HTMLElement[] = [];
 	let toneSubmenuVisible = false;
 	let currentSelectedTone: string | null = null;
+	let selectedToneIndex = 0;
+	let toneSubmenuOptions: HTMLElement[] = [];
 
 	// Available tones for writing
 	const availableTones = [
@@ -342,6 +344,8 @@
 
 		slashMenuElement = null;
 		slashMenuOptions = [];
+		toneSubmenuVisible = false;
+		toneSubmenuOptions = [];
 	}
 
 	// Handle key press for slash and escape to close
@@ -349,8 +353,22 @@
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
 
-			// If slash menu is open, select the current menu item
+			// If tone submenu is open, select the current tone
+			if (toneSubmenuVisible && slashMenuElement) {
+				selectCurrentToneItem();
+				return;
+			}
+
+			// If slash menu is open, handle the selection
 			if (slashMenuElement) {
+				// If tone is selected, show the tone submenu
+				if (selectedMenuIndex === 0) {
+					// Tone is the first option (index 0)
+					showToneSubmenu(slashMenuElement);
+					return;
+				}
+
+				// Otherwise, select the current menu item
 				selectCurrentMenuItem();
 				return;
 			}
@@ -378,6 +396,21 @@
 			value = ''; // Clear the input immediately
 			removeDirectSlashMenu();
 		} else if (event.key === 'ArrowUp') {
+			// If tone submenu is open, navigate up in the submenu
+			if (toneSubmenuVisible) {
+				event.preventDefault();
+				selectedToneIndex = Math.max(0, selectedToneIndex - 1);
+				updateSelectedToneItem();
+				// Scroll to keep the selected item in view
+				if (toneSubmenuOptions[selectedToneIndex]) {
+					toneSubmenuOptions[selectedToneIndex].scrollIntoView({
+						behavior: 'smooth',
+						block: 'nearest'
+					});
+				}
+				return;
+			}
+
 			// If slash menu is open, navigate up in the menu
 			if (slashMenuElement) {
 				event.preventDefault();
@@ -396,6 +429,21 @@
 				}
 			}, 0);
 		} else if (event.key === 'ArrowDown') {
+			// If tone submenu is open, navigate down in the submenu
+			if (toneSubmenuVisible) {
+				event.preventDefault();
+				selectedToneIndex = Math.min(availableTones.length - 1, selectedToneIndex + 1);
+				updateSelectedToneItem();
+				// Scroll to keep the selected item in view
+				if (toneSubmenuOptions[selectedToneIndex]) {
+					toneSubmenuOptions[selectedToneIndex].scrollIntoView({
+						behavior: 'smooth',
+						block: 'nearest'
+					});
+				}
+				return;
+			}
+
 			// If slash menu is open, navigate down in the menu
 			if (slashMenuElement) {
 				event.preventDefault();
@@ -415,6 +463,17 @@
 			}, 0);
 		} else if (event.key === 'Escape') {
 			event.preventDefault();
+			// If tone submenu is open, close just the submenu but keep the main menu open
+			if (toneSubmenuVisible) {
+				const submenu = document.getElementById('tone-submenu');
+				if (submenu) {
+					submenu.remove();
+				}
+				toneSubmenuVisible = false;
+				return;
+			}
+
+			// Otherwise, remove the entire menu
 			removeDirectSlashMenu();
 			if (onEscape) {
 				onEscape();
@@ -559,15 +618,19 @@
 		header.style.color = '#4b5563';
 		submenu.appendChild(header);
 
-		// Create grid of tone options
-		const toneGrid = document.createElement('div');
-		toneGrid.style.display = 'grid';
-		toneGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-		toneGrid.style.gap = '8px';
+		// Reset tone options array
+		toneSubmenuOptions = [];
+		selectedToneIndex = 0;
+
+		// Create list of tone options (instead of grid for better keyboard navigation)
+		const toneList = document.createElement('div');
+		toneList.style.display = 'flex';
+		toneList.style.flexDirection = 'column';
+		toneList.style.gap = '4px';
 
 		// Add all available tones
 		availableTones.forEach((tone, index) => {
-			const toneButton = document.createElement('button');
+			const toneButton = document.createElement('div');
 			toneButton.textContent = tone;
 			toneButton.style.padding = '8px 12px';
 			toneButton.style.border = '1px solid #e5e7eb';
@@ -577,46 +640,74 @@
 			toneButton.style.cursor = 'pointer';
 			toneButton.style.textTransform = 'capitalize';
 
-			// Highlight if this is the current tone
-			if (tone === currentSelectedTone) {
-				toneButton.style.backgroundColor = '#eff6ff';
-				toneButton.style.borderColor = '#60a5fa';
-				toneButton.style.fontWeight = 'bold';
+			// Set data attribute for identification
+			toneButton.setAttribute('data-tone-index', index.toString());
+
+			// Set the first option as selected by default, or the current tone if set
+			if (
+				(currentSelectedTone && tone === currentSelectedTone) ||
+				(!currentSelectedTone && index === 0)
+			) {
+				selectedToneIndex = index;
 			}
 
 			// Add hover effect
 			toneButton.addEventListener('mouseover', () => {
-				if (tone !== currentSelectedTone) {
-					toneButton.style.backgroundColor = '#f9fafb';
-				}
-			});
-
-			toneButton.addEventListener('mouseout', () => {
-				if (tone !== currentSelectedTone) {
-					toneButton.style.backgroundColor = 'white';
-				}
+				selectedToneIndex = index;
+				updateSelectedToneItem();
 			});
 
 			// Handle click to select the tone
 			toneButton.addEventListener('click', () => {
-				setTone(tone);
-				currentSelectedTone = tone;
-				removeDirectSlashMenu();
-
-				// Update the text in the input to reflect the selected tone
-				if (value.includes('/tone') && inputElement) {
-					value = value.replace(/\/tone.*/, '').trim();
-				}
+				selectTone(tone);
 			});
 
-			toneGrid.appendChild(toneButton);
+			toneList.appendChild(toneButton);
+			toneSubmenuOptions.push(toneButton);
 		});
 
-		submenu.appendChild(toneGrid);
+		submenu.appendChild(toneList);
 		parentMenu.appendChild(submenu);
 
 		// Update the state
 		toneSubmenuVisible = true;
+
+		// Set the initial selection
+		updateSelectedToneItem();
+	}
+
+	function updateSelectedToneItem() {
+		if (toneSubmenuOptions) {
+			toneSubmenuOptions.forEach((option, index) => {
+				if (index === selectedToneIndex) {
+					option.style.backgroundColor = '#eff6ff';
+					option.style.borderColor = '#60a5fa';
+					option.style.fontWeight = 'bold';
+				} else {
+					option.style.backgroundColor = 'white';
+					option.style.borderColor = '#e5e7eb';
+					option.style.fontWeight = 'normal';
+				}
+			});
+		}
+	}
+
+	function selectTone(tone: string) {
+		setTone(tone);
+		currentSelectedTone = tone;
+		removeDirectSlashMenu(); // This closes both the main menu and submenu
+
+		// Update the text in the input to reflect the selected tone
+		if (value.includes('/tone') && inputElement) {
+			value = value.replace(/\/tone.*/, '').trim();
+		}
+	}
+
+	function selectCurrentToneItem() {
+		if (toneSubmenuVisible && toneSubmenuOptions && toneSubmenuOptions[selectedToneIndex]) {
+			const selectedTone = availableTones[selectedToneIndex];
+			selectTone(selectedTone);
+		}
 	}
 
 	function handleSlashCommand(command: string) {
